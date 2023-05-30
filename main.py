@@ -4,6 +4,9 @@ import math
 from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
+import os
+
+# os.remove(file)
 
 # declaration
 coords = []
@@ -74,7 +77,7 @@ def click_event(event, x, y, flags, params):
 		font = cv2.FONT_HERSHEY_SIMPLEX
 		cv2.putText(img, str(x) + ',' +
 					str(y), (x,y), font,
-					0.5, (255, 0, 0), 1)
+					0.5, (0, 0, 255), 1)
 		cv2.imshow('image', img)
 
 	# checking for right mouse clicks	
@@ -145,7 +148,7 @@ def selectROI_area(image):
 	image = cv2.rectangle(image, (int(r[0]),int(r[1])), 
 		(int(r[0]+r[2]),int(r[1]+r[3])), (0,0,64), -1)
 
-	pd.DataFrame(value).to_csv('ROI.csv')
+	pd.DataFrame(value).to_csv('ROI.csv',index=False,header=False)
 	cv2.imwrite('ROI.png', image)
 
 	return image
@@ -184,14 +187,26 @@ if __name__=="__main__":
 	print('width: ', w)
 	print('height:', h)
 
-	img = area_remover(img)
-
+	stop = False
+	# img = area_remover(img)
 	img = selectROI_area(img)
+	while stop == False:
+		print("Press 'n' to stop selecting")
+
+		if cv2.waitKey(0) & 0xFF == ord('n'):
+			stop = True
+		else:
+			img = selectROI_area(img)
+
+	# img = selectROI_area(img)
 
 	# assign value to coord
 	# 1 = wall, remove
 	# 0 = empty
+	# validation only
 	value = area_valuer(img)
+
+	print(value[:2])
 
 	cv2.imwrite('after.png', img)
 
