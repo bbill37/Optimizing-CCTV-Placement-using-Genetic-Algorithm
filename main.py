@@ -1,10 +1,11 @@
-from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageOps
+# from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageOps
 import cv2
 import math
 from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 import os
+import ga
 
 # os.remove(file)
 
@@ -172,6 +173,29 @@ def cctv_quantity_initializer(img,scale):
 	
 	return quantity
 
+# genetic algorithm --------------------
+
+def population():
+	chromo = 0
+	return chromo
+def fitness_calculation():
+	fitness = 0
+	return fitness
+def mating_pool():
+	chromo = 0
+	return chromo
+def parent_selection():
+	parent = 0
+	return parent
+def mating():
+	parent = 0
+	return parent
+def offspring():
+	offspring = 0
+	return offspring
+
+
+
 # ------------------------------------------------------------------------------------------------------
 
 # driver function
@@ -206,7 +230,7 @@ if __name__=="__main__":
 	# validation only
 	value = area_valuer(img)
 
-	print(value[:2])
+	# print(value[:2])
 
 	cv2.imwrite('after.png', img)
 
