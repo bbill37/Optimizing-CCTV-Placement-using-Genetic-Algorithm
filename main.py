@@ -142,13 +142,28 @@ def area_valuer(img):
 	# print(arr)
 
 	arr = [[0 for x in range(w)] for y in range(h)]
+	# arr = [[0 for y in range(h)] for x in range(w)]
+	# arr = []
+	row = []
+	col = []
+
+	# for x in range(w):
+	# 	for y in range(h):
+	# 		if 	img[x,y][2] < 128:
+	# 			col.append(1)
+	# 		else:
+	# 			col.append(0)
+	# 	arr.append(col)
 
 	for y in range(h):
 		for x in range(w):
 			if 	img[x,y][2] < 128:
 				arr[y][x] = 1
-			# else:
-			# 	arr[y][x] = 0
+				# row.append(1)
+			else:
+				arr[y][x] = 0
+				# row.append(0)
+		# arr.append(row)
 
 		
 	value = [[0 for x in range(w)] for y in range(h)]
@@ -157,14 +172,15 @@ def area_valuer(img):
 	# print((value[-1][-1]))
 
 				
-	pd.DataFrame(value).to_csv('checker.csv')
+	if pd.DataFrame(arr).to_csv('checker.csv') == True:
+		print("checker.csv saved")
 
 	# print(value[0][:10])
 	# print(value)
 
 	# Image.fromarray(arr).save('array.png')
 
-	return value
+	return arr
 
 def selectROI_area(image):
 	r = cv2.selectROI("select the area", image)
@@ -206,45 +222,85 @@ def cctv_quantity_initializer(img,scale):
 
 # genetic algorithm ----------------------------------------
 
-def rand_coords():
-	w, h, _ = read_image().shape
+def rand_coords(max_cctv,img,randvalue):
+	w, h, _ = img.shape
 
-	value = [[0 for x in range(w)] for y in range(h)]
+	# randvalue = [[0 for x in range(w)] for y in range(h)]
 
-	for y in range(h):
-		for x in range(w):
-			if 	img[x,y][2] < 128:
-				value[y][x] = 1
+	# for y in range(h):
+	# 	for x in range(w):
+	# 		if 	img[x,y][2] < 128:
+	# 			randvalue[y][x] = 1
 
-	randx = random.randint(0,w)
-	randy = random.randint(0,h)
-	rand = (randx,randy)
-
-	if value[int(randy)][int(randx)] != 1:
-		rand_list.append(rand)
+	# for x in range(w):
+	# 		if 	img[x,0][2] < 128:
+	# 			randvalue[0][x] = 1
 
 	randx = random.randint(0,w)
 	randy = random.randint(0,h)
 	rand = (randx,randy)
 
-	if value[int(randy)][int(randx)] != 1:
-		rand_list.append(rand)
+	# row = []
+	# col = [1,1,1,0,0]
+	# row.append(col)
+	# col = [2,2,2,2,0]
+	# row.append(col)
+	# col = [3,3,3,0,0]
+	# row.append(col)
+	
+	
+	# print(row)
+	# print(row[2][3])
 
-	while len(rand_list) < 10: # cctv quan
+	# randvalue[99][99] = 10
 
-		if value[int(randy)][int(randx)] != 1:
+	# print(randvalue[99][99])
 
-			if rand not in rand_list:
-				rand_list.append(rand)
-			else:
-				randx = random.randint(0,w)
-				randy = random.randint(0,h)
-				rand = (randx,randy)
-		else:
+	print(len(randvalue))
+	print(len(randvalue[0]))
+	print(randy)
+	print(randx)
+
+	# print(randvalue[18][15])
+	# print(randvalue[18][16])
+	# print(randvalue[17][16])
+
+	
+
+	# n = range(len(randvalue[0]))
+	# for i in n:
+	# 	print(i)
+
+	# exit()
+
+	while len(rand_list) < max_cctv: # cctv quan
+
+		if rand in rand_list:
 			randx = random.randint(0,w)
 			randy = random.randint(0,h)
 			rand = (randx,randy)
-
+		else:
+			print(randy)
+			print(randx)
+			# if randvalue[int(randy)][int(randx)] == 1:
+			if randvalue[randy][randx] == 1: # ERROR index out of range
+			# if randvalue[randx][randy] == 1: # ERROR index out of range
+				randx = random.randint(0,w)
+				randy = random.randint(0,h)
+				rand = (randx,randy)
+			else:
+				# if len(rand_list) > 1:
+				# 	if math.dist(rand_list[-2],rand_list[-1]) < MIN_DISTANCE:
+				# 		randx = random.randint(0,w)
+				# 		randy = random.randint(0,h)
+				# 		rand = (randx,randy)
+				# 	else:
+				# 		rand_list.append(rand)
+				# else:
+				### CONDITIONAL DISTANCE CANT WORK HERE, 
+				# SO PUT IN FITNESS AS MUTATION MAYBE?
+					rand_list.append(rand)
+				
 	print("\n")
 	print(rand_list)
 	return rand_list
@@ -256,17 +312,18 @@ if __name__=="__main__":
 	# scale 1pixel:10cm  or 20pixel:6feet
 
 	# reading the image
-	img = read_image()
+	original_image = read_image()
 	image_path = "art.png"
 
 	# identify image size
-	h, w, _ = img.shape
+	h, w, _ = original_image.shape
 	# print('width: ', w)
 	# print('height:', h)
 
-	stop = False
 	# img = area_remover(img)
-	img = selectROI_area(img)
+	availableArea_image = selectROI_area(original_image)
+	
+	stop = False
 	while stop == False:
 		print("\nPress 's' to stop")
 
@@ -275,7 +332,7 @@ if __name__=="__main__":
 			stop = True
 			print("\nCalculating ...")
 		else:
-			img = selectROI_area(img)
+			availableArea_image = selectROI_area(availableArea_image)
 
 	# img = selectROI_area(img)
 
@@ -283,15 +340,22 @@ if __name__=="__main__":
 	# 1 = wall, remove
 	# 0 = empty
 	# validation only
-	value = area_valuer(img)
+	value = area_valuer(availableArea_image)
+
+	# print(len(value))
+	# print(len(value[0]))
 
 	# print(value[:2])
 
-	cv2.imwrite('after.png', img)
-	print("\nafter.png saved")
+	if cv2.imwrite('after.png', availableArea_image) == True:
+		print("\nafter.png saved")
 
-	cctv_quantity = cctv_quantity_initializer(img,scale = 10)
+	cctv_quantity = cctv_quantity_initializer(availableArea_image,scale = 10)
 
-	rand_coords()
+	rand_coords(cctv_quantity,availableArea_image,value)
+
+	# test = [(1,1),(5,5),(10,10)]
+
+	# print (math.dist(test[0],test[2]))
 
 # ---------------------------------------------------------
