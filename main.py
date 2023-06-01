@@ -206,7 +206,16 @@ def cctv_quantity_initializer(img,scale):
 
 # genetic algorithm ----------------------------------------
 
-def rand_coords(value):
+def rand_coords():
+	w, h, _ = read_image().shape
+
+	value = [[0 for x in range(w)] for y in range(h)]
+
+	for y in range(h):
+		for x in range(w):
+			if 	img[x,y][2] < 128:
+				value[y][x] = 1
+
 	randx = random.randint(0,w)
 	randy = random.randint(0,h)
 	rand = (randx,randy)
@@ -220,11 +229,6 @@ def rand_coords(value):
 
 	if value[int(randy)][int(randx)] != 1:
 		rand_list.append(rand)
-
-	print(rand_list)
-	print(rand_list[-1][-1])
-
-	exit()
 
 	while len(rand_list) < 10: # cctv quan
 
@@ -241,6 +245,7 @@ def rand_coords(value):
 			randy = random.randint(0,h)
 			rand = (randx,randy)
 
+	print("\n")
 	print(rand_list)
 	return rand_list
 
@@ -287,6 +292,6 @@ if __name__=="__main__":
 
 	cctv_quantity = cctv_quantity_initializer(img,scale = 10)
 
-	rand_coords(value)
+	rand_coords()
 
 # ---------------------------------------------------------
