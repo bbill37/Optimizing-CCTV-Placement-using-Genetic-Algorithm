@@ -1,17 +1,20 @@
-# from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageOps
+from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageOps
 import cv2
 import math
-from matplotlib import pyplot as plt
-import numpy as np
+# from matplotlib import pyplot as plt
+# import numpy
 import pandas as pd
-import os
-import ga
+# import os
+import random
+# import numpy as np
+from array import *
 
 # os.remove(file)
 
 # declaration
 coords = []
 value = []
+rand_list = []
 default_scale = 1
 
 CCTV_RADIUS = 1000
@@ -114,7 +117,8 @@ def area_remover(img):
 	cv2.setMouseCallback('image', click_event)
 
 	# wait for a key to be pressed to exit
-	if cv2.waitKey(0) & 0xFF == ord('p'):
+	k = cv2.waitKey(0)
+	if k == ord("p"):
 		if len(coords) > 1: # exit if no or 1 coord
 			while len(coords) > 1:
 				img = draw_rectangle(img,coords)
@@ -129,27 +133,53 @@ def area_remover(img):
 def area_valuer(img):
 	w, h, _ = img.shape
 
-	for i in range(w):
-		col = []
-		for j in range(h):
-			if 	img[i,j][2] < 128:
-				col.append(1) # WALL
-			else:
-				col.append(0) # CLEAR
-		value.append(col)
-	# print(value)
+	rows, cols = (h, w)
+	r,c = 0,0
+
+	# arr = [[0 for x in range(10)] for y in range(5)]
+	# arr[0][4] = 1
+	# arr[4][0] = 1
+	# print(arr)
+
+	arr = [[0 for x in range(w)] for y in range(h)]
+
+	for y in range(h):
+		for x in range(w):
+			if 	img[x,y][2] < 128:
+				arr[y][x] = 1
+			# else:
+			# 	arr[y][x] = 0
+
+		
+	value = [[0 for x in range(w)] for y in range(h)]
+	# value = arr[:][:]
+
+	# print((value[-1][-1]))
+
 				
-	pd.DataFrame(value).to_csv('sample.csv')
+	pd.DataFrame(value).to_csv('checker.csv')
+
+	# print(value[0][:10])
+	# print(value)
+
+	# Image.fromarray(arr).save('array.png')
 
 	return value
 
 def selectROI_area(image):
 	r = cv2.selectROI("select the area", image)
 
+	# method 1
+	# for y in range(r[3]-r[1]):
+	# 	for x in range(r[2]-r[0]):
+	# 		if image[x,y][2] > 128:
+	# 			image[x,y][2] = 64
+
+	# method 2
 	image = cv2.rectangle(image, (int(r[0]),int(r[1])), 
 		(int(r[0]+r[2]),int(r[1]+r[3])), (0,0,64), -1)
 
-	pd.DataFrame(value).to_csv('ROI.csv',index=False,header=False)
+	# pd.DataFrame(value).to_csv('ROI.csv',index=False,header=False)
 	cv2.imwrite('ROI.png', image)
 
 	return image
@@ -171,30 +201,48 @@ def cctv_quantity_initializer(img,scale):
 
 	quantity = round(clear_area / (math.pi * math.pow(CCTV_RADIUS/scale,2)))
 	
+	print("\nInitializing cctv quantity: ", quantity)
 	return quantity
 
-# genetic algorithm --------------------
+# genetic algorithm ----------------------------------------
 
-def population():
-	chromo = 0
-	return chromo
-def fitness_calculation():
-	fitness = 0
-	return fitness
-def mating_pool():
-	chromo = 0
-	return chromo
-def parent_selection():
-	parent = 0
-	return parent
-def mating():
-	parent = 0
-	return parent
-def offspring():
-	offspring = 0
-	return offspring
+def rand_coords(value):
+	randx = random.randint(0,w)
+	randy = random.randint(0,h)
+	rand = (randx,randy)
 
+	if value[int(randy)][int(randx)] != 1:
+		rand_list.append(rand)
 
+	randx = random.randint(0,w)
+	randy = random.randint(0,h)
+	rand = (randx,randy)
+
+	if value[int(randy)][int(randx)] != 1:
+		rand_list.append(rand)
+
+	print(rand_list)
+	print(rand_list[-1][-1])
+
+	exit()
+
+	while len(rand_list) < 10: # cctv quan
+
+		if value[int(randy)][int(randx)] != 1:
+
+			if rand not in rand_list:
+				rand_list.append(rand)
+			else:
+				randx = random.randint(0,w)
+				randy = random.randint(0,h)
+				rand = (randx,randy)
+		else:
+			randx = random.randint(0,w)
+			randy = random.randint(0,h)
+			rand = (randx,randy)
+
+	print(rand_list)
+	return rand_list
 
 # ------------------------------------------------------------------------------------------------------
 
@@ -208,17 +256,19 @@ if __name__=="__main__":
 
 	# identify image size
 	h, w, _ = img.shape
-	print('width: ', w)
-	print('height:', h)
+	# print('width: ', w)
+	# print('height:', h)
 
 	stop = False
 	# img = area_remover(img)
 	img = selectROI_area(img)
 	while stop == False:
-		print("Press 'n' to stop selecting")
+		print("\nPress 's' to stop")
 
-		if cv2.waitKey(0) & 0xFF == ord('n'):
+		k = cv2.waitKey(0)
+		if k == ord("s"):
 			stop = True
+			print("\nCalculating ...")
 		else:
 			img = selectROI_area(img)
 
@@ -233,5 +283,10 @@ if __name__=="__main__":
 	# print(value[:2])
 
 	cv2.imwrite('after.png', img)
+	print("\nafter.png saved")
 
-	cctv_quantity = print(cctv_quantity_initializer(img,10))
+	cctv_quantity = cctv_quantity_initializer(img,scale = 10)
+
+	rand_coords(value)
+
+# ---------------------------------------------------------
