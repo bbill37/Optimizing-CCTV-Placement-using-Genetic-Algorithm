@@ -104,17 +104,19 @@ def add_cctv_coordinates(image_path, coordinates):
 
     return marked_image_path
 
+
+
 # ---------- ---------- ---------- ---------- ----------
 
 # Example usage
-image_path = "art.png"  # Replace with the path to your image file
-coordinates = []
+# image_path = "art.png"  # Replace with the path to your image file
+# coordinates = []
 # coordinates.append(mark_node())
 # print(coordinates)
 
-coordinates = [((100, 100), (100, 200), (200, 200), (200, 100))]  # Replace with your detected coordinates
+# coordinates = [((100, 100), (100, 200), (200, 200), (200, 100))]  # Replace with your detected coordinates
 
-enhanced_image_path = preprocess_image(image_path)
+# enhanced_image_path = preprocess_image(image_path)
 
-marked_image_path = add_cctv_coordinates(image_path, coordinates)
-print("marked image saved at:", marked_image_path)
+# marked_image_path = add_cctv_coordinates(image_path, coordinates)
+# print("marked image saved at:", marked_image_path)

@@ -2,20 +2,37 @@ from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageOps
 import cv2
 import math
 # from matplotlib import pyplot as plt
-# import numpy
 import pandas as pd
 # import os
 import random
-# import numpy as np
+import numpy as np
 from array import *
 
-# os.remove(file)
+# ------------------------------------------------------------
+
+def circleCoord(img, center, radius, color, thickness):
+    image = cv2.circle(img, (center[1],center[0]), radius, color, thickness)
+    return image
+
+def circleArea(img, center, radius, color, thickness):
+    image = cv2.circle(img, (center[1],center[0]), radius, color, thickness)
+    return image
+
+def putTextCoord(img, text, org, fontFace, fontScale, color, thickness):
+    image = cv2.putText(img, str(text[1])+','+str(text[0]), (org[1],org[0]), fontFace, fontScale, color, thickness)
+    return image
+
+# ------------------------------------------------------------
 
 # declaration
 coords = []
 value = []
 rand_list = []
 default_scale = 1
+
+img = cv2.imread('art.png', 1)
+w, h, c = img.shape
+coord_vals = [[0 for y in range(0,h)] for x in range(0,w)]
 
 CCTV_RADIUS = 1000
 MIN_DISTANCE = 900
@@ -67,6 +84,7 @@ def draw_rectangle(image,coords):
 # of the points clicked on the image
 
 def click_event(event, x, y, flags, params):
+	img = cv2.imread('art.png', 1)
 
 	# checking for left mouse clicks
 	if event == cv2.EVENT_LBUTTONDOWN:
@@ -133,54 +151,20 @@ def area_remover(img):
 def area_valuer(img):
 	w, h, _ = img.shape
 
-	rows, cols = (h, w)
-	r,c = 0,0
-
-	# arr = [[0 for x in range(10)] for y in range(5)]
-	# arr[0][4] = 1
-	# arr[4][0] = 1
-	# print(arr)
-
-	arr = [[0 for x in range(w)] for y in range(h)]
-	# arr = [[0 for y in range(h)] for x in range(w)]
-	# arr = []
-	row = []
-	col = []
-
-	# for x in range(w):
-	# 	for y in range(h):
-	# 		if 	img[x,y][2] < 128:
-	# 			col.append(1)
-	# 		else:
-	# 			col.append(0)
-	# 	arr.append(col)
-
-	for y in range(h):
-		for x in range(w):
-			if 	img[x,y][2] < 128:
-				arr[y][x] = 1
-				# row.append(1)
+	for x in range(0,w):
+		for y in range(0,h):
+			if 	(img[x,y][0] < 64 and img[x,y][1] < 64 and img[x,y][2] < 128):
+				# walls
+				coord_vals[x][y] = 1
 			else:
-				arr[y][x] = 0
-				# row.append(0)
-		# arr.append(row)
+				coord_vals[x][y] = 0
 
-		
-	value = [[0 for x in range(w)] for y in range(h)]
-	# value = arr[:][:]
+			if 	(img[x,y][0] < 128 and img[x,y][1] > 128 and img[x,y][2] < 128):
+				# coverage
+				coord_vals[x][y] = 2
 
-	# print((value[-1][-1]))
-
-				
-	if pd.DataFrame(arr).to_csv('checker.csv') == True:
-		print("checker.csv saved")
-
-	# print(value[0][:10])
-	# print(value)
-
-	# Image.fromarray(arr).save('array.png')
-
-	return arr
+	if pd.DataFrame(coord_vals).to_csv('coord_vals.csv')==True: 
+		print("coord_vals.csv saved")
 
 def selectROI_area(image):
 	r = cv2.selectROI("select the area", image)
@@ -215,95 +199,120 @@ def cctv_quantity_initializer(img,scale):
 
 	clear_area = (h * w) - wall
 
-	quantity = round(clear_area / (math.pi * math.pow(CCTV_RADIUS/scale,2)))
+	quantity = round(clear_area / (math.pi * math.pow((CCTV_RADIUS/scale),2)))
 	
 	print("\nInitializing cctv quantity: ", quantity)
 	return quantity
 
 # genetic algorithm ----------------------------------------
 
-def rand_coords(max_cctv,img,randvalue):
+def rand_coords(max_cctv,img):
 	w, h, _ = img.shape
-
-	# randvalue = [[0 for x in range(w)] for y in range(h)]
-
-	# for y in range(h):
-	# 	for x in range(w):
-	# 		if 	img[x,y][2] < 128:
-	# 			randvalue[y][x] = 1
-
-	# for x in range(w):
-	# 		if 	img[x,0][2] < 128:
-	# 			randvalue[0][x] = 1
 
 	randx = random.randint(0,w)
 	randy = random.randint(0,h)
 	rand = (randx,randy)
 
-	# row = []
-	# col = [1,1,1,0,0]
-	# row.append(col)
-	# col = [2,2,2,2,0]
-	# row.append(col)
-	# col = [3,3,3,0,0]
-	# row.append(col)
-	
-	
-	# print(row)
-	# print(row[2][3])
-
-	# randvalue[99][99] = 10
-
-	# print(randvalue[99][99])
-
-	print(len(randvalue))
-	print(len(randvalue[0]))
-	print(randy)
-	print(randx)
-
-	# print(randvalue[18][15])
-	# print(randvalue[18][16])
-	# print(randvalue[17][16])
-
-	
-
-	# n = range(len(randvalue[0]))
-	# for i in n:
-	# 	print(i)
-
-	# exit()
-
 	while len(rand_list) < max_cctv: # cctv quan
+		print(rand)
+		# print(str(rand)+" : "+str(img[randx,randy][:]))
+		print(coord_vals[randx][randy])
 
-		if rand in rand_list:
+		if coord_vals[randx][randy] == 1: # ERROR index out of range
 			randx = random.randint(0,w)
 			randy = random.randint(0,h)
 			rand = (randx,randy)
 		else:
-			print(randy)
-			print(randx)
-			# if randvalue[int(randy)][int(randx)] == 1:
-			if randvalue[randy][randx] == 1: # ERROR index out of range
-			# if randvalue[randx][randy] == 1: # ERROR index out of range
+			if rand in rand_list:
 				randx = random.randint(0,w)
 				randy = random.randint(0,h)
 				rand = (randx,randy)
 			else:
 				# if len(rand_list) > 1:
-				# 	if math.dist(rand_list[-2],rand_list[-1]) < MIN_DISTANCE:
+				# 	if math.dist(rand[-2],rand[-1]) < (MIN_DISTANCE/default_scale):
 				# 		randx = random.randint(0,w)
 				# 		randy = random.randint(0,h)
 				# 		rand = (randx,randy)
-				# 	else:
+				# 	else:	
 				# 		rand_list.append(rand)
-				# else:
-				### CONDITIONAL DISTANCE CANT WORK HERE, 
-				# SO PUT IN FITNESS AS MUTATION MAYBE?
+				# else:	
 					rand_list.append(rand)
-				
+	
+	print("\n ----------------------------------------------------------------")
+	radius = int(CCTV_RADIUS/default_scale)
+
+	imgArea = cv2.imread('art.png')
+	for rand in rand_list:
+
+		# rand[1],rand[0] for image !!!!!!!!!!!
+		imgArea = circleArea(imgArea, rand, radius, (0, 191, 0), -1)
+	for rand in rand_list:
+
+		# rand[1],rand[0] for image !!!!!!!!!!!
+		imgArea = circleArea(imgArea, rand, radius, (0, 128, 0), 1)
+	cv2.imwrite('imgArea.png',imgArea)
+	
+
+	imgCoord = cv2.imread('art.png')
+	for rand in rand_list:
+
+		# rand[1],rand[0] for image !!!!!!!!!!!
+		imgCoord = circleCoord(imgCoord, rand, 2, (191, 0, 0), -1)
+		
+		# print(str(rand)+" : "+str(img[randx,randy][:]))
+		# print(coord_vals[rand[0]][rand[1]])
+
+	# for rand in rand_list:
+	# 	putTextCoord(img, rand, rand, cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, 0.5, (0, 0, 255), 1)
+		
+	
+	#---------------------------------------------------
+	# img1 = cv2.imread('forest.png')
+	img2 = cv2.imread('art.png')
+	dst = cv2.addWeighted(img2, 0.6, imgArea, 0.5, 0)
+
+	# img_arr = np.hstack((img, img2))
+	# cv2.imshow('Input Images',img_arr)
+	# cv2.imshow('Blended Image',dst)
+
+	# cv2.waitKey(0)
+	# cv2.destroyAllWindows()
+	#---------------------------------------------------
+	
+	cv2.imwrite('rand.png',dst)
 	print("\n")
-	print(rand_list)
+	print(f'Updated List after removing duplicates = {rand_list}')
+
 	return rand_list
+
+def cal_pop_fitness(): # value[], randList[]
+    # Calculating the fitness value of each solution in the current population.
+    # The fitness function caulcuates the sum of products between each input and its corresponding weight.
+    # fitness = np.sum(pop*equation_inputs, axis=1)
+	
+	# Reading an image in default mode
+	image = cv2.imread('art.png', 1)
+	
+	# Window name in which image is displayed
+	window_name = 'Image'
+
+	# Center coordinates
+	# center_coordinates = pop[:]
+
+	# Radius of circle
+	radius = 2
+
+	# Blue color in BGR
+	color = (127, 127, 0)
+
+	# Line thickness of 2 px
+	thickness = -1
+
+	# print(pop[-1])
+	i=0
+
+	# if cv2.imwrite('rand.png', image) == True:
+	# 	print("\nrand.png saved")
 
 # ------------------------------------------------------------------------------------------------------
 
@@ -350,9 +359,15 @@ if __name__=="__main__":
 	if cv2.imwrite('after.png', availableArea_image) == True:
 		print("\nafter.png saved")
 
-	cctv_quantity = cctv_quantity_initializer(availableArea_image,scale = 10)
+	default_scale = 10
 
-	rand_coords(cctv_quantity,availableArea_image,value)
+	cctv_quantity = cctv_quantity_initializer(availableArea_image,default_scale)
+
+	randList = rand_coords(cctv_quantity,availableArea_image)
+
+	cal_pop_fitness()
+
+	# print(randList[1])
 
 	# test = [(1,1),(5,5),(10,10)]
 
