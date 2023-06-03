@@ -156,15 +156,21 @@ def area_valuer(img):
 			if 	(img[x,y][0] < 64 and img[x,y][1] < 64 and img[x,y][2] < 128):
 				# walls
 				coord_vals[x][y] = 1
+				img[x,y] = (7, 0, 11)
 			else:
 				coord_vals[x][y] = 0
+				img[x,y] = (255,255,255)
 
 			if 	(img[x,y][0] < 128 and img[x,y][1] > 128 and img[x,y][2] < 128):
 				# coverage
 				coord_vals[x][y] = 2
 
+	cv2.imwrite('value.png',img)
+
 	if pd.DataFrame(coord_vals).to_csv('coord_vals.csv')==True: 
 		print("coord_vals.csv saved")
+
+	return img
 
 def selectROI_area(image):
 	r = cv2.selectROI("select the area", image)
@@ -204,8 +210,6 @@ def cctv_quantity_initializer(img,scale):
 	print("\nInitializing cctv quantity: ", quantity)
 	return quantity
 
-# genetic algorithm ----------------------------------------
-
 def rand_coords(max_cctv,img):
 	w, h, _ = img.shape
 
@@ -214,9 +218,6 @@ def rand_coords(max_cctv,img):
 	rand = (randx,randy)
 
 	while len(rand_list) < max_cctv: # cctv quan
-		print(rand)
-		# print(str(rand)+" : "+str(img[randx,randy][:]))
-		print(coord_vals[randx][randy])
 
 		if coord_vals[randx][randy] == 1: # ERROR index out of range
 			randx = random.randint(0,w)
@@ -237,6 +238,10 @@ def rand_coords(max_cctv,img):
 				# 		rand_list.append(rand)
 				# else:	
 					rand_list.append(rand)
+
+		print(rand)
+		# print(str(rand)+" : "+str(img[randx,randy][:]))
+		print(coord_vals[randx][randy])
 	
 	print("\n ----------------------------------------------------------------")
 	radius = int(CCTV_RADIUS/default_scale)
@@ -246,11 +251,14 @@ def rand_coords(max_cctv,img):
 
 		# rand[1],rand[0] for image !!!!!!!!!!!
 		imgArea = circleArea(imgArea, rand, radius, (0, 191, 0), -1)
+	cv2.imwrite('imgArea.png',imgArea)
+
 	for rand in rand_list:
 
 		# rand[1],rand[0] for image !!!!!!!!!!!
-		imgArea = circleArea(imgArea, rand, radius, (0, 128, 0), 1)
-	cv2.imwrite('imgArea.png',imgArea)
+		imgAreaOutline = circleArea(img, rand, radius, (0, 128, 0), 1)
+	
+	cv2.imwrite('imgAreaOutline.png',imgAreaOutline)
 	
 
 	imgCoord = cv2.imread('art.png')
@@ -285,34 +293,79 @@ def rand_coords(max_cctv,img):
 
 	return rand_list
 
+def update_value():
+	imgValue = cv2.imread('imgArea.png')
+	w, h, _ = imgValue.shape
+
+	for x in range(0,w):
+		for y in range(0,h):
+			if 	coord_vals[x][y] == 1:
+				# walls
+				imgValue[x,y] = (7, 0, 11)
+
+			if 	(imgValue[x,y][0] < 64 and imgValue[x,y][1] > 128 and imgValue[x,y][2] < 64):
+				imgValue[x,y] = (0, 191, 0)
+				coord_vals[x][y] = 2
+
+	cv2.imwrite('latestValue.png',imgValue)
+
+# genetic algorithm ----------------------------------------
 def cal_pop_fitness(): # value[], randList[]
+
+	imgValue = cv2.imread('rand.png')
+
+	for x in range(0,w):
+		for y in range(0,h):
+			# count total value for green area
+			if 	(imgValue[x,y][0] < 64 and imgValue[x,y][1] < 64 and imgValue[x,y][2] < 128):
+				# walls
+				coord_vals[x][y] = 1
+				imgValue[x,y] = (7, 0, 11)
+			else:
+				coord_vals[x][y] = 0
+				imgValue[x,y] = (255,255,255)
+
+			if 	(imgValue[x,y][0] < 128 and imgValue[x,y][1] > 128 and imgValue[x,y][2] < 128):
+				# coverage
+				coord_vals[x][y] = 2
+
     # Calculating the fitness value of each solution in the current population.
     # The fitness function caulcuates the sum of products between each input and its corresponding weight.
     # fitness = np.sum(pop*equation_inputs, axis=1)
-	
-	# Reading an image in default mode
-	image = cv2.imread('art.png', 1)
-	
-	# Window name in which image is displayed
-	window_name = 'Image'
 
-	# Center coordinates
-	# center_coordinates = pop[:]
+def select_mating_pool(pop, fitness, num_parents):
+    # Selecting the best individuals in the current generation as parents for producing the offspring of the next generation.
+    parents = np.empty((num_parents, pop.shape[1]))
+    for parent_num in range(num_parents):
+        max_fitness_idx = np.where(fitness == np.max(fitness))
+        max_fitness_idx = max_fitness_idx[0][0]
+        parents[parent_num, :] = pop[max_fitness_idx, :]
+        fitness[max_fitness_idx] = -99999999999
+    return parents
 
-	# Radius of circle
-	radius = 2
+def crossover(parents, offspring_size):
+    offspring = np.empty(offspring_size)
+    # The point at which crossover takes place between two parents. Usually it is at the center.
+    crossover_point = np.uint8(offspring_size[1]/2)
 
-	# Blue color in BGR
-	color = (127, 127, 0)
+    for k in range(offspring_size[0]):
+        # Index of the first parent to mate.
+        parent1_idx = k%parents.shape[0]
+        # Index of the second parent to mate.
+        parent2_idx = (k+1)%parents.shape[0]
+        # The new offspring will have its first half of its genes taken from the first parent.
+        offspring[k, 0:crossover_point] = parents[parent1_idx, 0:crossover_point]
+        # The new offspring will have its second half of its genes taken from the second parent.
+        offspring[k, crossover_point:] = parents[parent2_idx, crossover_point:]
+    return offspring
 
-	# Line thickness of 2 px
-	thickness = -1
-
-	# print(pop[-1])
-	i=0
-
-	# if cv2.imwrite('rand.png', image) == True:
-	# 	print("\nrand.png saved")
+def mutation(offspring_crossover):
+    # Mutation changes a single gene in each offspring randomly.
+    for idx in range(offspring_crossover.shape[0]):
+        # The random value to be added to the gene.
+        random_value = np.random.uniform(-1.0, 1.0, 1)
+        offspring_crossover[idx, 4] = offspring_crossover[idx, 4] + random_value
+    return offspring_crossover
 
 # ------------------------------------------------------------------------------------------------------
 
@@ -365,7 +418,9 @@ if __name__=="__main__":
 
 	randList = rand_coords(cctv_quantity,availableArea_image)
 
-	cal_pop_fitness()
+	# cal_pop_fitness()
+
+	update_value()
 
 	# print(randList[1])
 
