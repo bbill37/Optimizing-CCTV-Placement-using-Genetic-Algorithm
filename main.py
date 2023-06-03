@@ -3,7 +3,7 @@ import cv2
 import math
 # from matplotlib import pyplot as plt
 import pandas as pd
-# import os
+import sys
 import random
 import numpy as np
 from array import *
@@ -22,15 +22,43 @@ def putTextCoord(img, text, org, fontFace, fontScale, color, thickness):
     image = cv2.putText(img, str(text[1])+','+str(text[0]), (org[1],org[0]), fontFace, fontScale, color, thickness)
     return image
 
+def slope(x1, y1, x2, y2):
+    if(x2 - x1 != 0):
+      return (float)(y2-y1)/(x2-x1)
+    return sys.maxint
+
+def coord_penalty(img, coord):
+	w,h,_=img.shape
+
+	for x in range(0,w):
+		for y in range(0,h):
+			if 	coord_vals[x][y] == 1:
+				if math.dist((int(x),int(y)),coord) < (MIN_DISTANCE/default_scale):
+					if int(x) < coord[0] and int(y) < coord[1]:
+						coord = ((coord[0]+1),(coord[1]+1))
+
+					if int(x) < coord[0] and int(y) > coord[1]:
+						coord = ((coord[0]+1),(coord[1]-1))
+
+					if int(x) > coord[0] and int(y) < coord[1]:
+						coord = ((coord[0]-1),(coord[1]+1))
+
+					if int(x) > coord[0] and int(y) > coord[1]:
+						coord = ((coord[0]-1),(coord[1]-1))
+
+					# coord_vals[x][y] = 1
+					# img[x,y] = (7, 0, 11)
+
 # ------------------------------------------------------------
 
 # declaration
+raw_path = "art.png"
 coords = []
 value = []
 rand_list = []
 default_scale = 1
 
-img = cv2.imread('art.png', 1)
+img = cv2.imread(raw_path, 1)
 w, h, c = img.shape
 coord_vals = [[0 for y in range(0,h)] for x in range(0,w)]
 
@@ -40,7 +68,7 @@ MAX_DISTANCE = 1100
 
 # read floor plan image -------------------------
 def read_image():
-	img = cv2.imread('art.png', 1)
+	img = cv2.imread(raw_path, 1)
 	return img
 
 # preprocess image ------------------------- ???
@@ -64,7 +92,7 @@ def binarization():
 def draw_rectangle(image,coords):
 	# get start_point from odd & end_point from even array
 	
-	# img = cv2.imread('art.png', 1)
+	# img = cv2.imread(raw_path, 1)
 	img = image
 
 	# print(coords[0]) # DONE
@@ -84,7 +112,7 @@ def draw_rectangle(image,coords):
 # of the points clicked on the image
 
 def click_event(event, x, y, flags, params):
-	img = cv2.imread('art.png', 1)
+	img = cv2.imread(raw_path, 1)
 
 	# checking for left mouse clicks
 	if event == cv2.EVENT_LBUTTONDOWN:
@@ -144,6 +172,8 @@ def area_remover(img):
 				del coords[0]
 				if len(coords) == 0:
 					break
+
+	# cv2.imwrite('availableArea.png',img)
 	
 	return img
 
@@ -186,7 +216,7 @@ def selectROI_area(image):
 		(int(r[0]+r[2]),int(r[1]+r[3])), (0,0,64), -1)
 
 	# pd.DataFrame(value).to_csv('ROI.csv',index=False,header=False)
-	cv2.imwrite('ROI.png', image)
+	cv2.imwrite('availableArea.png',image)
 
 	return image
 
@@ -246,7 +276,7 @@ def rand_coords(max_cctv,img):
 	print("\n ----------------------------------------------------------------")
 	radius = int(CCTV_RADIUS/default_scale)
 
-	imgArea = cv2.imread('art.png')
+	imgArea = cv2.imread(raw_path)
 	for rand in rand_list:
 
 		# rand[1],rand[0] for image !!!!!!!!!!!
@@ -261,7 +291,7 @@ def rand_coords(max_cctv,img):
 	cv2.imwrite('imgAreaOutline.png',imgAreaOutline)
 	
 
-	imgCoord = cv2.imread('art.png')
+	imgCoord = cv2.imread(raw_path)
 	for rand in rand_list:
 
 		# rand[1],rand[0] for image !!!!!!!!!!!
@@ -276,7 +306,7 @@ def rand_coords(max_cctv,img):
 	
 	#---------------------------------------------------
 	# img1 = cv2.imread('forest.png')
-	img2 = cv2.imread('art.png')
+	img2 = cv2.imread(raw_path)
 	dst = cv2.addWeighted(img2, 0.6, imgArea, 0.5, 0)
 
 	# img_arr = np.hstack((img, img2))
@@ -306,8 +336,30 @@ def update_value():
 			if 	(imgValue[x,y][0] < 64 and imgValue[x,y][1] > 128 and imgValue[x,y][2] < 64):
 				imgValue[x,y] = (0, 191, 0)
 				coord_vals[x][y] = 2
+			
+			if 	coord_vals[x][y] == 0:
+				# walls
+				imgValue[x,y] = (255, 255, 255)
 
 	cv2.imwrite('latestValue.png',imgValue)
+
+	raw_image = cv2.imread(raw_path)
+
+	for x in range(0,w):
+		for y in range(0,h):
+			if 	coord_vals[x][y] == 1:
+				# walls
+				raw_image[x,y] = (7, 0, 11)
+
+			if 	coord_vals[x][y] == 2:
+				# area
+				raw_image[x,y] = (0, 191, 0)
+			
+			if 	coord_vals[x][y] == 0:
+				# available
+				raw_image[x,y] = (255, 255, 255)
+
+	cv2.imwrite('rawValue.png',raw_image)
 
 # genetic algorithm ----------------------------------------
 def cal_pop_fitness(): # value[], randList[]
@@ -375,7 +427,7 @@ if __name__=="__main__":
 
 	# reading the image
 	original_image = read_image()
-	image_path = "art.png"
+	raw_path = "art.png"
 
 	# identify image size
 	h, w, _ = original_image.shape

@@ -106,3 +106,7 @@ best_match_idx = numpy.where(fitness == numpy.max(fitness))
 
 print("Best solution : ", new_population[best_match_idx, :])
 print("Best solution fitness : ", fitness[best_match_idx])
+
+coord = (10,10)
+coord = ((coord[0]+1),(coord[1]+1))
+print(coord)
