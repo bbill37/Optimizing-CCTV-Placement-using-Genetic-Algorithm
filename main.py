@@ -10,23 +10,28 @@ from array import *
 
 # ------------------------------------------------------------
 
+# draw small dot as coordinate
 def circleCoord(img, center, radius, color, thickness):
     image = cv2.circle(img, (center[1],center[0]), radius, color, thickness)
     return image
 
+# draw filled circle as area with coordinate as centroid
 def circleArea(img, center, radius, color, thickness):
     image = cv2.circle(img, (center[1],center[0]), radius, color, thickness)
     return image
 
+# put text for coordinate
 def putTextCoord(img, text, org, fontFace, fontScale, color, thickness):
     image = cv2.putText(img, str(text[1])+','+str(text[0]), (org[1],org[0]), fontFace, fontScale, color, thickness)
     return image
 
+# calculate slope between two coordinates to increase distance between them
 def slope(x1, y1, x2, y2):
     if(x2 - x1 != 0):
       return (float)(y2-y1)/(x2-x1)
     return sys.maxint
 
+# penalty for GA if distance between coordinates less than minimum distance
 def coord_penalty(img, coord):
 	w,h,_=img.shape
 
@@ -425,18 +430,31 @@ def mutation(offspring_crossover):
 if __name__=="__main__":
 	# scale 1pixel:10cm  or 20pixel:6feet
 
+	# Read floor plan image from the directory.
+
 	# reading the image
 	original_image = read_image()
 	raw_path = "art.png"
 
 	# identify image size
+	# Get the width and height of the image.
+
 	h, w, _ = original_image.shape
 	# print('width: ', w)
 	# print('height:', h)
 
 	# img = area_remover(img)
+	# Use cv2.selectROI() to select areas that are not available 
+	# for CCTV placement (unwanted areas) and change their color to (0, 0, 64).
+
 	availableArea_image = selectROI_area(original_image)
 	
+
+	# Use a loop for cv2.selectROI() until there are no unwanted areas left to select.
+	# area_valuer() loops through all the coordinates of the image, 
+	# assigning values: 0 for available areas, 1 for walls and unwanted areas.
+
+
 	stop = False
 	while stop == False:
 		print("\nPress 's' to stop")
@@ -454,6 +472,9 @@ if __name__=="__main__":
 	# 1 = wall, remove
 	# 0 = empty
 	# validation only
+	# Implement area_valuer() to assign values in a 2D array 
+	# representing the coordinates in the resulting image from the selectROI() loop.
+
 	value = area_valuer(availableArea_image)
 
 	# print(len(value))
@@ -466,13 +487,21 @@ if __name__=="__main__":
 
 	default_scale = 10
 
+	# to initialize the CCTV quantity based on the available values and estimated total CCTV coverage.
 	cctv_quantity = cctv_quantity_initializer(availableArea_image,default_scale)
 
+	# Implement rand_coords() to draw the CCTV coverage 
+	# with the color (0, 191, 0) for all generated random coordinates.
 	randList = rand_coords(cctv_quantity,availableArea_image)
 
-	# cal_pop_fitness()
-
+	# Implement update_value() to update the value for all coordinates 
+	# based on the result of the rand_coords() image, comparing the color on the image with the value array.
+	# Coordinates with a value of 1 will turn the pixel black, 
+	# and coordinates with the color (0, 191, 0) will have a value of 2.
+	# Only coordinates with a value of 0 can be changed to 2 based on the color on the image.
 	update_value()
+
+	# cal_pop_fitness()
 
 	# print(randList[1])
 
@@ -481,3 +510,44 @@ if __name__=="__main__":
 	# print (math.dist(test[0],test[2]))
 
 # ---------------------------------------------------------
+print("\nProcessing Result ...")
+
+
+
+
+
+
+
+
+"""
+
+Current Code:
+
+Read floor plan image from the directory.
+Get the width and height of the image.
+Use cv2.selectROI() to select areas that are not available for CCTV placement (unwanted areas) and change their color to (0, 0, 64).
+Use a loop for cv2.selectROI() until there are no unwanted areas left to select.
+Implement area_valuer() to assign values in a 2D array representing the coordinates in the resulting image from the selectROI() loop.
+The size of the 2D array is based on the width and height of the image.
+area_valuer() loops through all the coordinates of the image, assigning values: 0 for available areas, 1 for walls and unwanted areas.
+Implement cctv_quantity_initializer() to initialize the CCTV quantity based on the available values and estimated total CCTV coverage.
+The CCTV quantity is used as the number of genes in the chromosome for the genetic algorithm to generate random coordinates only on coordinates with an available value of 0.
+Implement rand_coords() to draw the CCTV coverage with the color (0, 191, 0) for all generated random coordinates.
+Implement update_value() to update the value for all coordinates based on the result of the rand_coords() image, comparing the color on the image with the value array.
+Coordinates with a value of 1 will turn the pixel black, and coordinates with the color (0, 191, 0) will have a value of 2.
+Only coordinates with a value of 0 can be changed to 2 based on the color on the image.
+
+
+
+Ongoing Plans:
+
+Evaluate the fitness value using the values for each pixel based on the value array.
+Implement a penalty function that increases the distance between all coordinates and walls if they are below the minimum distance, to be used in the genetic algorithm pseudocode.
+Update the value for overlapping areas.
+Implement the functions: select_mating_pool(), crossover(), and mutation() for the initial population in the genetic algorithm.
+Implement a decision-making function to evaluate the best population's fitness value and determine whether to decrease, increase, or keep the initial CCTV quantity.
+If the CCTV quantity needs to be changed, run the genetic algorithm again to find the best population with the new generated CCTV quantity.
+Use a feed-forward or feed-backward technique in the decision-making process.
+
+
+"""
