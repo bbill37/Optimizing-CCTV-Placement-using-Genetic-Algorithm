@@ -10,16 +10,27 @@ def cal_pop_fitness(equation_inputs, pop):
     # Calculating the fitness value of each solution in the current population.
     # The fitness function caulcuates the sum of products between each input and its corresponding weight.
     fitness = numpy.sum(pop*equation_inputs, axis=1)
+    # print("aaa")
+    # print(fitness)
     return fitness
 
 def select_mating_pool(pop, fitness, num_parents):
+    # print(f"pop: ",pop)
+    print(f"pop: ",pop.shape[0])
+    print(f"pop: ",pop.shape[1])
     # Selecting the best individuals in the current generation as parents for producing the offspring of the next generation.
     parents = numpy.empty((num_parents, pop.shape[1]))
+    # print(f"parents: ",parents)
     for parent_num in range(num_parents):
         max_fitness_idx = numpy.where(fitness == numpy.max(fitness))
+        # print(f"max_fitness_idx: ",max_fitness_idx)
         max_fitness_idx = max_fitness_idx[0][0]
+        # print(f"max_fitness_idx: ",max_fitness_idx)
         parents[parent_num, :] = pop[max_fitness_idx, :]
+        print(parents[parent_num, :])
         fitness[max_fitness_idx] = -99999999999
+
+    # print(f"pop: ",parents)
     return parents
 
 def crossover(parents, offspring_size):
@@ -74,7 +85,7 @@ pop_size = (sol_per_pop,num_weights) # The population will have sol_per_pop chro
 new_population = numpy.random.uniform(low=-4.0, high=4.0, size=pop_size)
 print(new_population)
 
-num_generations = 10
+num_generations = 5
 for generation in range(num_generations):
     print("Generation : ", generation)
     # Measing the fitness of each chromosome in the population.

@@ -7,6 +7,7 @@ import sys
 import random
 import numpy as np
 from array import *
+import operator as op
 
 # ------------------------------------------------------------
 
@@ -33,26 +34,42 @@ def slope(x1, y1, x2, y2):
 
 # penalty for GA if distance between coordinates less than minimum distance
 def coord_penalty(img, coord):
-	w,h,_=img.shape
+	# w,h,_=img.shape
+	penalty = True
 
-	for x in range(0,w):
-		for y in range(0,h):
+	for x in range(0,W):
+		for y in range(0,H):
 			if 	coord_vals[x][y] == 1:
-				if math.dist((int(x),int(y)),coord) < (MIN_DISTANCE/default_scale):
-					if int(x) < coord[0] and int(y) < coord[1]:
-						coord = ((coord[0]+1),(coord[1]+1))
+				while (penalty == True):
+					if math.dist((int(x),int(y)),coord) < (MIN_DISTANCE/default_scale):
+						if int(x) < coord[0] and int(y) < coord[1]:
+							coord = ((coord[0]+1),(coord[1]+1))
 
-					if int(x) < coord[0] and int(y) > coord[1]:
-						coord = ((coord[0]+1),(coord[1]-1))
+						if int(x) < coord[0] and int(y) > coord[1]:
+							coord = ((coord[0]+1),(coord[1]-1))
 
-					if int(x) > coord[0] and int(y) < coord[1]:
-						coord = ((coord[0]-1),(coord[1]+1))
+						if int(x) > coord[0] and int(y) < coord[1]:
+							coord = ((coord[0]-1),(coord[1]+1))
 
-					if int(x) > coord[0] and int(y) > coord[1]:
-						coord = ((coord[0]-1),(coord[1]-1))
+						if int(x) > coord[0] and int(y) > coord[1]:
+							coord = ((coord[0]-1),(coord[1]-1))
+					else:
+						penalty = False
 
 					# coord_vals[x][y] = 1
 					# img[x,y] = (7, 0, 11)
+
+# Python3 program to check if a point lies inside a circle or not
+def isInside(circle_x, circle_y, rad, x, y):
+     
+    # Compare radius of circle
+    # with distance of its center
+    # from given point
+    if ((x - circle_x) * (x - circle_x) +
+        (y - circle_y) * (y - circle_y) <= rad * rad):
+        return True;
+    else:
+        return False;
 
 # ------------------------------------------------------------
 
@@ -60,12 +77,14 @@ def coord_penalty(img, coord):
 raw_path = "art.png"
 coords = []
 value = []
-rand_list = []
 default_scale = 1
 
 img = cv2.imread(raw_path, 1)
 w, h, c = img.shape
-coord_vals = [[0 for y in range(0,h)] for x in range(0,w)]
+W = w-1
+H = h-1
+
+coord_vals = [[0 for y in range(0,H)] for x in range(0,W)]
 
 CCTV_RADIUS = 1000
 MIN_DISTANCE = 900
@@ -79,7 +98,7 @@ def read_image():
 # preprocess image ------------------------- ???
 def binarization():
 	img = read_image()
-	w, h, _ = img.shape
+	# w, h, _ = img.shape
 	for i in range(w):
 		for j in range(h):
 			if img[i,j][0] > 128 | img[i,j][1] > 128 | img[i,j][2] > 128:
@@ -184,10 +203,10 @@ def area_remover(img):
 
 # area value assigner APPROVED
 def area_valuer(img):
-	w, h, _ = img.shape
+	# w, h, _ = img.shape
 
-	for x in range(0,w):
-		for y in range(0,h):
+	for x in range(0,W):
+		for y in range(0,H):
 			if 	(img[x,y][0] < 64 and img[x,y][1] < 64 and img[x,y][2] < 128):
 				# walls
 				coord_vals[x][y] = 1
@@ -230,7 +249,7 @@ def cctv_quantity_initializer(img,scale):
 	wall = 0
 	quantity = 0
 	
-	w, h, _ = img.shape
+	# w, h, _ = img.shape
 
 	for i in range(w):
 		for j in range(h):
@@ -240,43 +259,57 @@ def cctv_quantity_initializer(img,scale):
 
 	clear_area = (h * w) - wall
 
-	quantity = round(clear_area / (math.pi * math.pow((CCTV_RADIUS/scale),2)))
+	quantity = round(clear_area / (1*(math.pi * math.pow((CCTV_RADIUS/scale),2))))
 	
 	print("\nInitializing cctv quantity: ", quantity)
 	return quantity
 
 def rand_coords(max_cctv,img):
-	w, h, _ = img.shape
+	# w, h, _ = img.shape
+	rand_val = [[0 for y in range(0,H)] for x in range(0,W)]
 
-	randx = random.randint(0,w)
-	randy = random.randint(0,h)
+	rand_list = []
+
+	randx = random.randint(0,W)
+	randy = random.randint(0,H)
 	rand = (randx,randy)
 
 	while len(rand_list) < max_cctv: # cctv quan
 
-		if coord_vals[randx][randy] == 1: # ERROR index out of range
-			randx = random.randint(0,w)
-			randy = random.randint(0,h)
-			rand = (randx,randy)
-		else:
-			if rand in rand_list:
-				randx = random.randint(0,w)
-				randy = random.randint(0,h)
-				rand = (randx,randy)
-			else:
-				# if len(rand_list) > 1:
-				# 	if math.dist(rand[-2],rand[-1]) < (MIN_DISTANCE/default_scale):
-				# 		randx = random.randint(0,w)
-				# 		randy = random.randint(0,h)
-				# 		rand = (randx,randy)
-				# 	else:	
-				# 		rand_list.append(rand)
-				# else:	
-					rand_list.append(rand)
+		if randx < W and randy < H:
 
-		print(rand)
+			if coord_vals[randx][randy] != 1: 
+				if rand not in rand_list:
+					# for rand in rand_list:
+					# 	circle_x = rand[0]
+					# 	circle_y = rand[1]
+					# 	rad = 1.2*int(CCTV_RADIUS/default_scale)
+
+					# 	for x in range(0,W):
+					# 		for y in range(0,H):
+					# 			if(isInside(circle_x, circle_y, rad, x, y)):
+					# 				randx = random.randint(0,W)
+					# 				randy = random.randint(0,H)
+					# 				rand = (randx,randy)
+					# 			else:
+									rand_list.append(rand)
+				else:
+					randx = random.randint(0,W)
+					randy = random.randint(0,H)
+					rand = (randx,randy)
+			else:
+				randx = random.randint(0,W)
+				randy = random.randint(0,H)
+				rand = (randx,randy)
+				
+		else:
+			randx = random.randint(0,W)
+			randy = random.randint(0,H)
+			rand = (randx,randy)
+
+		# print(rand)
 		# print(str(rand)+" : "+str(img[randx,randy][:]))
-		print(coord_vals[randx][randy])
+		# print(coord_vals[randx][randy])
 	
 	print("\n ----------------------------------------------------------------")
 	radius = int(CCTV_RADIUS/default_scale)
@@ -288,11 +321,14 @@ def rand_coords(max_cctv,img):
 		imgArea = circleArea(imgArea, rand, radius, (0, 191, 0), -1)
 	cv2.imwrite('imgArea.png',imgArea)
 
+	i = 1
 	for rand in rand_list:
 
 		# rand[1],rand[0] for image !!!!!!!!!!!
 		imgAreaOutline = circleArea(img, rand, radius, (0, 128, 0), 1)
-	
+		cv2.putText(img, str(i), (rand[1],rand[0]), cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, 0.5, (0, 0, 255), 1)
+		i += 1
+
 	cv2.imwrite('imgAreaOutline.png',imgAreaOutline)
 	
 
@@ -323,17 +359,17 @@ def rand_coords(max_cctv,img):
 	#---------------------------------------------------
 	
 	cv2.imwrite('rand.png',dst)
-	print("\n")
-	print(f'Updated List after removing duplicates = {rand_list}')
+	# print("\n")
+	# print(f'Updated List after removing duplicates = {rand_list}')
 
 	return rand_list
 
 def update_value():
 	imgValue = cv2.imread('imgArea.png')
-	w, h, _ = imgValue.shape
+	# w, h, _ = imgValue.shape
 
-	for x in range(0,w):
-		for y in range(0,h):
+	for x in range(0,W):
+		for y in range(0,H):
 			if 	coord_vals[x][y] == 1:
 				# walls
 				imgValue[x,y] = (7, 0, 11)
@@ -341,6 +377,7 @@ def update_value():
 			if 	(imgValue[x,y][0] < 64 and imgValue[x,y][1] > 128 and imgValue[x,y][2] < 64):
 				imgValue[x,y] = (0, 191, 0)
 				coord_vals[x][y] = 2
+				# print(2)
 			
 			if 	coord_vals[x][y] == 0:
 				# walls
@@ -350,8 +387,8 @@ def update_value():
 
 	raw_image = cv2.imread(raw_path)
 
-	for x in range(0,w):
-		for y in range(0,h):
+	for x in range(0,W):
+		for y in range(0,H):
 			if 	coord_vals[x][y] == 1:
 				# walls
 				raw_image[x,y] = (7, 0, 11)
@@ -367,37 +404,101 @@ def update_value():
 	cv2.imwrite('rawValue.png',raw_image)
 
 # genetic algorithm ----------------------------------------
-def cal_pop_fitness(): # value[], randList[]
+def cal_pop_fitness(pop): # value[], randList[]
 
 	imgValue = cv2.imread('rand.png')
 
-	for x in range(0,w):
-		for y in range(0,h):
-			# count total value for green area
+	fitness = 0
+	covered_coordinates = 0
+	coverage_percentage = 0.0
+	unwanted_penalty = 0
+	coverable = 0
+	total_coordinates = w*h
+	gene_val = [[0 for y in range(0,H)] for x in range(0,W)]
+	gene_fitness = []
+
+	for gene in pop:
+		# Driver Code
+		# x = 1
+		# y = 1
+		circle_x = gene[0]
+		circle_y = gene[1]
+		rad = int(CCTV_RADIUS/default_scale)
+		total_gene_val = 0
+
+		for x in range(0,W):
+			for y in range(0,H):
+
+				if(isInside(circle_x, circle_y, rad, x, y)):
+					# print("Inside")
+					if gene_val[x][y] == 0 and coord_vals[x][y] != 1:
+						gene_val[x][y] = 1
+						total_gene_val += gene_val[x][y]
+					else:
+						gene_val[x][y] += 1
+
+		gene_fitness.append(total_gene_val)
+
+	print(f"gene_fitness: ",gene_fitness)
+
+	for x in range(0,W):
+		for y in range(0,H):
+		
+			# if dark green value 1, penalty wall
+			if 	(imgValue[x,y][0] < 64 and imgValue[x,y][1] > 64 and imgValue[x,y][2] < 64 and coord_vals[x][y] == 1):
+				unwanted_penalty = op.add(unwanted_penalty,1)
+				# print(1)
+
+			# if light green value 0, value set 2 and covered
+			if 	(imgValue[x,y][0] < 192 and imgValue[x,y][1] > 192 and imgValue[x,y][2] < 192):
+			# if 	(imgValue[x,y][0] < 64 and imgValue[x,y][1] > 128 and imgValue[x,y][2] < 64):
+
+				# coverage
+				coord_vals[x][y] = 2
+				covered_coordinates = op.add(covered_coordinates,1)
+				# print(2)
+
+			# if red value set 1, else set 0
 			if 	(imgValue[x,y][0] < 64 and imgValue[x,y][1] < 64 and imgValue[x,y][2] < 128):
 				# walls
 				coord_vals[x][y] = 1
 				imgValue[x,y] = (7, 0, 11)
+				# print(1)
 			else:
 				coord_vals[x][y] = 0
 				imgValue[x,y] = (255,255,255)
+				# print(0)
 
-			if 	(imgValue[x,y][0] < 128 and imgValue[x,y][1] > 128 and imgValue[x,y][2] < 128):
-				# coverage
-				coord_vals[x][y] = 2
+			if coord_vals[x][y] != 1:
+				coverable += 1
 
+	coverage_percentage = covered_coordinates / total_coordinates
+	fitness = coverage_percentage - (unwanted_penalty/total_coordinates)
+	
+	fitnessg = sum(gene_fitness) / coverable
+
+	# print(covered_coordinates)
+	# print(total_coordinates)
+	# print(unwanted_penalty)
+	print(fitness)
+	print(fitnessg)
+
+	print("\nfitness value calculated ...")
+    
+	return fitnessg
     # Calculating the fitness value of each solution in the current population.
-    # The fitness function caulcuates the sum of products between each input and its corresponding weight.
-    # fitness = np.sum(pop*equation_inputs, axis=1)
-
+	
 def select_mating_pool(pop, fitness, num_parents):
     # Selecting the best individuals in the current generation as parents for producing the offspring of the next generation.
-    parents = np.empty((num_parents, pop.shape[1]))
+    parents = [[0 for i in range(num_parents)] for j in range(len(pop))]
+    # parents = np.empty((num_parents, pop.shape[1]))
     for parent_num in range(num_parents):
         max_fitness_idx = np.where(fitness == np.max(fitness))
         max_fitness_idx = max_fitness_idx[0][0]
-        parents[parent_num, :] = pop[max_fitness_idx, :]
-        fitness[max_fitness_idx] = -99999999999
+        parents[parent_num] = pop[max_fitness_idx]
+        fitness[max_fitness_idx] = -99999999
+
+    print(f"parents: ",parents)
     return parents
 
 def crossover(parents, offspring_size):
@@ -416,13 +517,51 @@ def crossover(parents, offspring_size):
         offspring[k, crossover_point:] = parents[parent2_idx, crossover_point:]
     return offspring
 
-def mutation(offspring_crossover):
-    # Mutation changes a single gene in each offspring randomly.
-    for idx in range(offspring_crossover.shape[0]):
-        # The random value to be added to the gene.
-        random_value = np.random.uniform(-1.0, 1.0, 1)
-        offspring_crossover[idx, 4] = offspring_crossover[idx, 4] + random_value
-    return offspring_crossover
+def mutation(pop,fitness):
+
+	min_fitness_idx = np.where(fitness == np.min(fitness))
+	x = pop[min_fitness_idx][0]
+	y = pop[min_fitness_idx][1]
+
+	for gene in pop:
+		# Driver Code
+		# x = 1
+		# y = 1
+		circle_x = gene[0]
+		circle_y = gene[1]
+		rad = int(CCTV_RADIUS/default_scale)
+		total_gene_val = 0
+    
+		while (isInside(circle_x, circle_y, rad, x, y) == True):
+			x = random.randint(0,W)
+			y = random.randint(0,H)
+			rand = (x,y)
+
+	gene_val = [[0 for y in range(0,H)] for x in range(0,W)]
+	for gene in pop:
+		# Driver Code
+		# x = 1
+		# y = 1
+		circle_x = gene[0]
+		circle_y = gene[1]
+		rad = int(CCTV_RADIUS/default_scale)
+		total_gene_val = 0
+
+		for x in range(0,W):
+			for y in range(0,H):
+
+				if(isInside(circle_x, circle_y, rad, x, y)):
+					# print("Inside")
+					if gene_val[x][y] == 0 and coord_vals[x][y] != 1:
+						gene_val[x][y] = 1
+						total_gene_val += gene_val[x][y]
+					else:
+						gene_val[x][y] += 1
+
+
+	# while (imgValue[x,y][0] < 64 and imgValue[x,y][1] > 128 and imgValue[x,y][2] < 64):
+
+
 
 # ------------------------------------------------------------------------------------------------------
 
@@ -439,7 +578,7 @@ if __name__=="__main__":
 	# identify image size
 	# Get the width and height of the image.
 
-	h, w, _ = original_image.shape
+	# h, w, _ = original_image.shape
 	# print('width: ', w)
 	# print('height:', h)
 
@@ -460,7 +599,7 @@ if __name__=="__main__":
 		print("\nPress 's' to stop")
 
 		k = cv2.waitKey(0)
-		if k == ord("s"):
+		if k == ord("s") or k == ord("S"):
 			stop = True
 			print("\nCalculating ...")
 		else:
@@ -488,11 +627,19 @@ if __name__=="__main__":
 	default_scale = 10
 
 	# to initialize the CCTV quantity based on the available values and estimated total CCTV coverage.
-	cctv_quantity = cctv_quantity_initializer(availableArea_image,default_scale)
+	pop_size = cctv_quantity_initializer(availableArea_image,default_scale)
+
+	sol_per_pop = 4
+	num_parents_mating = 2
 
 	# Implement rand_coords() to draw the CCTV coverage 
 	# with the color (0, 191, 0) for all generated random coordinates.
-	randList = rand_coords(cctv_quantity,availableArea_image)
+	new_population = []
+	fitness = []
+
+	
+
+	# print(f'Updated List after removing duplicates = {new_population}')
 
 	# Implement update_value() to update the value for all coordinates 
 	# based on the result of the rand_coords() image, comparing the color on the image with the value array.
@@ -501,7 +648,21 @@ if __name__=="__main__":
 	# Only coordinates with a value of 0 can be changed to 2 based on the color on the image.
 	update_value()
 
-	# cal_pop_fitness()
+	# ---------------------------------------------------------
+	num_generations = 10
+	# for generation in range(num_generations):
+	# 	print("Generation : ", generation)
+	
+	for x in range(sol_per_pop):
+		new_population.append(rand_coords(pop_size,availableArea_image))
+		fitness.append(cal_pop_fitness(new_population[x]))
+	
+	# fitness1 = cal_pop_fitness(new_population1)
+
+	# Measing the fitness of each chromosome in the population.
+    # fitness = cal_pop_fitness(equation_inputs, new_population)
+    
+	parents = select_mating_pool(new_population, fitness, num_parents_mating)
 
 	# print(randList[1])
 
