@@ -274,8 +274,8 @@ def randCoords(index,max_cctv):
 
 	rand_list = []
 
-	randx = random.randint(0,W)
-	randy = random.randint(0,H)
+	randx = random.randint(50,W)
+	randy = random.randint(50,H)
 	rand = (randx,randy)
 
 	while len(rand_list) < max_cctv: # cctv quan
@@ -285,6 +285,52 @@ def randCoords(index,max_cctv):
 			if coordVals[randx][randy] != 1:
 
 				if rand not in rand_list:
+					####
+					# penalty = True
+
+					# if len(rand_list) == 1:
+
+					# 	while (penalty == True):
+					# 		if math.dist(rand_list[0],rand) < (MIN_DISTANCE/default_scale):
+					# 			if rand_list[0][0] < rand[0] and rand_list[0][1] < rand[1]:
+					# 				rand = ((rand[0]+1),(rand[1]+1))
+
+					# 			if rand_list[0][0] < rand[0] and rand_list[0][1] > rand[1]:
+					# 				rand = ((rand[0]+1),(rand[1]-1))
+
+					# 			if rand_list[0][0] > rand[0] and rand_list[0][1] < rand[1]:
+					# 				rand = ((rand[0]-1),(rand[1]+1))
+
+					# 			if rand_list[0][0] > rand[0] and rand_list[0][1] > rand[1]:
+					# 				rand = ((rand[0]-1),(rand[1]-1))
+					# 		else:
+					# 			penalty = False
+					# 	rand_list.append(rand)
+
+					# if len(rand_list) > 1:
+						
+
+					# 	for coord in rand_list:
+				
+					# 		while (penalty == True):
+					# 			if math.dist(coord,rand) < (MIN_DISTANCE/default_scale):
+					# 				if coord[0] < rand[0] and coord[1] < rand[1]:
+					# 					rand = ((rand[0]+1),(rand[1]+1))
+
+					# 				if coord[0] < rand[0] and coord[1] > rand[1]:
+					# 					rand = ((rand[0]+1),(rand[1]-1))
+
+					# 				if coord[0] > rand[0] and coord[1] < rand[1]:
+					# 					rand = ((rand[0]-1),(rand[1]+1))
+
+					# 				if coord[0] > rand[0] and coord[1] > rand[1]:
+					# 					rand = ((rand[0]-1),(rand[1]-1))
+					# 			else:
+					# 				penalty = False
+					# 		rand_list.append(rand)
+							
+
+					###
 					rand_list.append(rand)
 
 				else:
@@ -355,7 +401,7 @@ def randCoords(index,max_cctv):
 	# cv2.destroyAllWindows()
 	#---------------------------------------------------
 	
-	cv2.imwrite('rand.png',dst) # double exposure image
+	cv2.imwrite('rand'+str(index)+'.png',dst) # double exposure image
 
 	return rand_list
 
@@ -406,19 +452,20 @@ def chrValue(index,chrList):
 
 	# cv2.imwrite('rawValue.png',raw_image)
 	image_path = 'rawValue' + str(index) + '.png'
-	cv2.imwrite(image_path,raw_image)
+	# cv2.imwrite(image_path,raw_image)
 
 # genetic algorithm ----------------------------------------
 def cal_pop_fitness(index,pop): # value[], randList[]
 
-	imgValue = cv2.imread('rand.png')
+	rand_path = 'rand'+str(index)+'.png'
+	imgValue = cv2.imread(rand_path,1)
 
 	fitness = 0
 	covered_coordinates = 0
 	coverage_percentage = 0.0
 	unwanted_penalty = 0
 	coverable = 0
-	total_coordinates = w*h
+	total_coordinates = 0
 	gene_val = [[0 for y in range(0,H)] for x in range(0,W)]
 	gene_fitness = []
 
@@ -430,19 +477,34 @@ def cal_pop_fitness(index,pop): # value[], randList[]
 		circle_y = gene[1]
 		rad = int(CCTV_RADIUS/default_scale)
 		total_gene_val = 0
+		gene_penalty = 0
 
 		for x in range(0,W):
 			for y in range(0,H):
 
 				if(isInside(circle_x, circle_y, rad, x, y)):
 					# print("Inside")
+					# area cover not wall
 					if gene_val[x][y] == 0 and coordVals[x][y] != 1:
 						gene_val[x][y] = 1
 						total_gene_val += gene_val[x][y]
-					else:
-						gene_val[x][y] += 1
 
-		gene_fitness.append(total_gene_val)
+					# area cover wall
+					if gene_val[x][y] == 0 and coordVals[x][y] == 1:
+						gene_penalty = op.add(gene_penalty,0.3)
+
+					# area overlap
+					if gene_val[x][y] > 0:
+						gene_val[x][y] += 1
+						gene_penalty = op.add(gene_penalty,0.3)
+
+					# if coordVals[x][y] == 1:
+					# 	gene_penalty = op.add(gene_penalty,1)
+					# else:
+					# 	total_gene_val = op.add(total_gene_val,1)
+
+		total_gene_val = total_gene_val - gene_penalty
+		gene_fitness.append(int(total_gene_val))
 
 	print(f"gene_fitness: ",gene_fitness)
 
@@ -461,6 +523,7 @@ def cal_pop_fitness(index,pop): # value[], randList[]
 				# coverage
 				# coordVals[x][y] = 2
 				covered_coordinates = op.add(covered_coordinates,1)
+				total_coordinates = op.add(total_coordinates,1)
 				# print(2)
 
 			# if red value set 1, else set 0
@@ -472,6 +535,7 @@ def cal_pop_fitness(index,pop): # value[], randList[]
 			else:
 				# coordVals[x][y] = 0
 				imgValue[x,y] = (255,255,255)
+				total_coordinates = op.add(total_coordinates,1)
 				# print(0)
 
 			if coordVals[x][y] != 1:
@@ -655,7 +719,7 @@ if __name__=="__main__":
 	
 	for x in range(sol_per_pop):
 		print("\n----------------------------------------------------------------")
-		print("\nChromosome " + str(x) + ":\n")
+		print("\nChromosome " + str(x+1) + ":\n")
 		chr = randCoords(x,pop_size)
 		new_population.append(chr)
 

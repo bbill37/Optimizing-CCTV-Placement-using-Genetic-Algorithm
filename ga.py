@@ -96,8 +96,7 @@ for generation in range(num_generations):
                                       num_parents_mating)
 
     # Generating next generation using crossover.
-    offspring_crossover = ga.crossover(parents,
-                                       offspring_size=(pop_size[0]-parents.shape[0], num_weights))
+    offspring_crossover = ga.crossover(parents, offspring_size=(pop_size[0]-parents.shape[0], num_weights))
 
     # Adding some variations to the offsrping using mutation.
     offspring_mutation = ga.mutation(offspring_crossover)
