@@ -39,7 +39,7 @@ def coord_penalty(img, coord):
 
 	for x in range(0,W):
 		for y in range(0,H):
-			if 	coord_vals[x][y] == 1:
+			if 	coordVals[x][y] == 1:
 				while (penalty == True):
 					if math.dist((int(x),int(y)),coord) < (MIN_DISTANCE/default_scale):
 						if int(x) < coord[0] and int(y) < coord[1]:
@@ -71,6 +71,15 @@ def isInside(circle_x, circle_y, rad, x, y):
     else:
         return False;
 
+#function which returns the index of minimum value in the list
+def get_minvalue(inputlist):
+ 
+    #get the minimum value in the list
+    min_value = min(inputlist)
+ 
+    #return the index of minimum value 
+    min_index=inputlist.index(min_value)
+    return min_index
 # ------------------------------------------------------------
 
 # declaration
@@ -84,7 +93,7 @@ w, h, c = img.shape
 W = w-1
 H = h-1
 
-coord_vals = [[0 for y in range(0,H)] for x in range(0,W)]
+coordVals = [[0 for y in range(0,H)] for x in range(0,W)]
 
 CCTV_RADIUS = 1000
 MIN_DISTANCE = 900
@@ -96,7 +105,7 @@ def read_image():
 	return img
 
 # preprocess image ------------------------- ???
-def binarization():
+def binarization(): # NOT USING
 	img = read_image()
 	# w, h, _ = img.shape
 	for i in range(w):
@@ -110,10 +119,10 @@ def binarization():
 				img[i,j][1] = 255
 				img[i,j][2] = 255
 	
-	cv2.imwrite("bw.png", img)
+	# cv2.imwrite("bw.png", img)
 
 # obtain coordinate for polygon -------------------------
-def draw_rectangle(image,coords):
+def draw_rectangle(image,coords): # NOT USING
 	# get start_point from odd & end_point from even array
 	
 	# img = cv2.imread(raw_path, 1)
@@ -135,7 +144,7 @@ def draw_rectangle(image,coords):
 # function to display the coordinates of
 # of the points clicked on the image
 
-def click_event(event, x, y, flags, params):
+def click_event(event, x, y, flags, params): # NOT USING
 	img = cv2.imread(raw_path, 1)
 
 	# checking for left mouse clicks
@@ -177,7 +186,7 @@ def click_event(event, x, y, flags, params):
 # define available area from polygon created -------------------------
 
 # 
-def area_remover(img):
+def area_remover(img): # NOT USING
 	# setting mouse handler for the image
 	# displaying the image
 	cv2.imshow('image', img)
@@ -202,71 +211,66 @@ def area_remover(img):
 	return img
 
 # area value assigner APPROVED
-def area_valuer(img):
-	# w, h, _ = img.shape
+def areaValuer():
+
+	availableImage = cv2.imread('availableArea.png',1)
 
 	for x in range(0,W):
 		for y in range(0,H):
-			if 	(img[x,y][0] < 64 and img[x,y][1] < 64 and img[x,y][2] < 128):
-				# walls
-				coord_vals[x][y] = 1
-				img[x,y] = (7, 0, 11)
+			# existed walls
+			if (availableImage[x,y][0] < 64 and availableImage[x,y][1] < 64 and availableImage[x,y][2] < 64):
+				coordVals[x][y] = 1
+				availableImage[x,y] = (7, 0, 11) # neutral black
+
+			# unwanted areas
+			if (availableImage[x,y][0] < 64 and availableImage[x,y][1] < 64 and availableImage[x,y][2] < 128):
+				coordVals[x][y] = 1
+				availableImage[x,y] = (7, 0, 11) # neutral black
+
+			# avl areas
 			else:
-				coord_vals[x][y] = 0
-				img[x,y] = (255,255,255)
+				coordVals[x][y] = 0
+				availableImage[x,y] = (255,255,255) # pure white
 
-			if 	(img[x,y][0] < 128 and img[x,y][1] > 128 and img[x,y][2] < 128):
-				# coverage
-				coord_vals[x][y] = 2
+	valuedImage = cv2.imwrite('bw.png',availableImage)
 
-	cv2.imwrite('value.png',img)
+	if pd.DataFrame(coordVals).to_csv('coordVals.csv')==True: 
+		print("coordVals.csv saved")
 
-	if pd.DataFrame(coord_vals).to_csv('coord_vals.csv')==True: 
-		print("coord_vals.csv saved")
-
-	return img
+	return valuedImage
 
 def selectROI_area(image):
 	r = cv2.selectROI("select the area", image)
 
-	# method 1
-	# for y in range(r[3]-r[1]):
-	# 	for x in range(r[2]-r[0]):
-	# 		if image[x,y][2] > 128:
-	# 			image[x,y][2] = 64
-
-	# method 2
 	image = cv2.rectangle(image, (int(r[0]),int(r[1])), 
 		(int(r[0]+r[2]),int(r[1]+r[3])), (0,0,64), -1)
 
-	# pd.DataFrame(value).to_csv('ROI.csv',index=False,header=False)
-	cv2.imwrite('availableArea.png',image)
+	if cv2.imwrite('availableArea.png', image) == True:
+		print("\navailableArea.png updated")
 
 	return image
 
 # initialize cctv number based on area? -------------------------
-def cctv_quantity_initializer(img,scale):
+def initializeSol(scale):
 	wall = 0
-	quantity = 0
-	
-	# w, h, _ = img.shape
+	qty = 0
 
-	for i in range(w):
-		for j in range(h):
-			if 	img[i,j][2] < 128: # red
+	for x in range(0,W):
+		for y in range(0,H):
+			if 	coordVals[x][y] == 1: # wall and unwanted area
 				# WALL
 				wall += 1
 
 	clear_area = (h * w) - wall
 
-	quantity = round(clear_area / (1*(math.pi * math.pow((CCTV_RADIUS/scale),2))))
+	qty = round(clear_area / (1*(math.pi * math.pow((CCTV_RADIUS/scale),2))))
 	
-	print("\nInitializing cctv quantity: ", quantity)
-	return quantity
+	print("\nInitializing cctv quantity: ", qty)
+	return qty
 
-def rand_coords(max_cctv,img):
-	# w, h, _ = img.shape
-	rand_val = [[0 for y in range(0,H)] for x in range(0,W)]
+def randCoords(index,max_cctv):
+
+	# rand_val = [[0 for y in range(0,H)] for x in range(0,W)]
 
 	rand_list = []
 
@@ -278,25 +282,16 @@ def rand_coords(max_cctv,img):
 
 		if randx < W and randy < H:
 
-			if coord_vals[randx][randy] != 1: 
-				if rand not in rand_list:
-					# for rand in rand_list:
-					# 	circle_x = rand[0]
-					# 	circle_y = rand[1]
-					# 	rad = 1.2*int(CCTV_RADIUS/default_scale)
+			if coordVals[randx][randy] != 1:
 
-					# 	for x in range(0,W):
-					# 		for y in range(0,H):
-					# 			if(isInside(circle_x, circle_y, rad, x, y)):
-					# 				randx = random.randint(0,W)
-					# 				randy = random.randint(0,H)
-					# 				rand = (randx,randy)
-					# 			else:
-									rand_list.append(rand)
+				if rand not in rand_list:
+					rand_list.append(rand)
+
 				else:
 					randx = random.randint(0,W)
 					randy = random.randint(0,H)
 					rand = (randx,randy)
+
 			else:
 				randx = random.randint(0,W)
 				randy = random.randint(0,H)
@@ -306,12 +301,9 @@ def rand_coords(max_cctv,img):
 			randx = random.randint(0,W)
 			randy = random.randint(0,H)
 			rand = (randx,randy)
-
-		# print(rand)
-		# print(str(rand)+" : "+str(img[randx,randy][:]))
-		# print(coord_vals[randx][randy])
 	
-	print("\n ----------------------------------------------------------------")
+	print("Random Coordinates Generated ...\n")
+
 	radius = int(CCTV_RADIUS/default_scale)
 
 	imgArea = cv2.imread(raw_path)
@@ -319,17 +311,22 @@ def rand_coords(max_cctv,img):
 
 		# rand[1],rand[0] for image !!!!!!!!!!!
 		imgArea = circleArea(imgArea, rand, radius, (0, 191, 0), -1)
-	cv2.imwrite('imgArea.png',imgArea)
 
+	image_path = 'imgArea' + str(index) + '.png'
+	cv2.imwrite(image_path,imgArea)
+	# cv2.imwrite('imgArea.png',imgArea)
+
+	imgRaw = cv2.imread(raw_path)
 	i = 1
 	for rand in rand_list:
 
 		# rand[1],rand[0] for image !!!!!!!!!!!
-		imgAreaOutline = circleArea(img, rand, radius, (0, 128, 0), 1)
-		cv2.putText(img, str(i), (rand[1],rand[0]), cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, 0.5, (0, 0, 255), 1)
+		imgAreaOutline = circleArea(imgRaw, rand, radius, (0, 128, 0), 1)
+		imgAreaOutline = circleCoord(imgRaw, rand, 2, (191, 0, 0), -1)
+		cv2.putText(imgRaw, str(i), (rand[1],rand[0]), cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, 0.5, (0, 0, 255), 1)
 		i += 1
 
-	cv2.imwrite('imgAreaOutline.png',imgAreaOutline)
+	cv2.imwrite(('imgAreaOutline' + str(index) + '.png'),imgAreaOutline)
 	
 
 	imgCoord = cv2.imread(raw_path)
@@ -358,53 +355,61 @@ def rand_coords(max_cctv,img):
 	# cv2.destroyAllWindows()
 	#---------------------------------------------------
 	
-	cv2.imwrite('rand.png',dst)
-	# print("\n")
-	# print(f'Updated List after removing duplicates = {rand_list}')
+	cv2.imwrite('rand.png',dst) # double exposure image
 
 	return rand_list
 
-def update_value():
-	imgValue = cv2.imread('imgArea.png')
-	# w, h, _ = imgValue.shape
+def chrValue(index,chrList):
+	
+	avlImg = cv2.imread('bw.png',1)
+	radius = int(CCTV_RADIUS/default_scale)
+	for chr in chrList:
+		# rand[1],rand[0] for image !!!!!!!!!!!
+		avlImg = circleArea(avlImg, chr, radius, (0, 191, 0), -1)
+	
+	image_path = ('imgArea') + str(index) + '.png'
+	img = cv2.imread(image_path,1)
 
 	for x in range(0,W):
 		for y in range(0,H):
-			if 	coord_vals[x][y] == 1:
+			if 	coordVals[x][y] == 1:
 				# walls
-				imgValue[x,y] = (7, 0, 11)
+				img[x,y] = (7, 0, 11)
 
-			if 	(imgValue[x,y][0] < 64 and imgValue[x,y][1] > 128 and imgValue[x,y][2] < 64):
-				imgValue[x,y] = (0, 191, 0)
-				coord_vals[x][y] = 2
+			if 	(img[x,y][0] < 64 and img[x,y][1] > 128 and img[x,y][2] < 64):
+				img[x,y] = (0, 191, 0)
+				coordVals[x][y] = 2
 				# print(2)
 			
-			if 	coord_vals[x][y] == 0:
+			if 	coordVals[x][y] == 0:
 				# walls
-				imgValue[x,y] = (255, 255, 255)
+				img[x,y] = (255, 255, 255)
 
-	cv2.imwrite('latestValue.png',imgValue)
+	image_path = ('imageValue') + str(index) + '.png'
+	cv2.imwrite(image_path,img)
 
 	raw_image = cv2.imread(raw_path)
 
 	for x in range(0,W):
 		for y in range(0,H):
-			if 	coord_vals[x][y] == 1:
+			if 	coordVals[x][y] == 1:
 				# walls
 				raw_image[x,y] = (7, 0, 11)
 
-			if 	coord_vals[x][y] == 2:
+			if 	coordVals[x][y] == 2:
 				# area
 				raw_image[x,y] = (0, 191, 0)
 			
-			if 	coord_vals[x][y] == 0:
+			if 	coordVals[x][y] == 0:
 				# available
 				raw_image[x,y] = (255, 255, 255)
 
-	cv2.imwrite('rawValue.png',raw_image)
+	# cv2.imwrite('rawValue.png',raw_image)
+	image_path = 'rawValue' + str(index) + '.png'
+	cv2.imwrite(image_path,raw_image)
 
 # genetic algorithm ----------------------------------------
-def cal_pop_fitness(pop): # value[], randList[]
+def cal_pop_fitness(index,pop): # value[], randList[]
 
 	imgValue = cv2.imread('rand.png')
 
@@ -431,7 +436,7 @@ def cal_pop_fitness(pop): # value[], randList[]
 
 				if(isInside(circle_x, circle_y, rad, x, y)):
 					# print("Inside")
-					if gene_val[x][y] == 0 and coord_vals[x][y] != 1:
+					if gene_val[x][y] == 0 and coordVals[x][y] != 1:
 						gene_val[x][y] = 1
 						total_gene_val += gene_val[x][y]
 					else:
@@ -445,7 +450,7 @@ def cal_pop_fitness(pop): # value[], randList[]
 		for y in range(0,H):
 		
 			# if dark green value 1, penalty wall
-			if 	(imgValue[x,y][0] < 64 and imgValue[x,y][1] > 64 and imgValue[x,y][2] < 64 and coord_vals[x][y] == 1):
+			if 	(imgValue[x,y][0] < 64 and imgValue[x,y][1] > 64 and imgValue[x,y][2] < 64 and coordVals[x][y] == 1):
 				unwanted_penalty = op.add(unwanted_penalty,1)
 				# print(1)
 
@@ -454,48 +459,51 @@ def cal_pop_fitness(pop): # value[], randList[]
 			# if 	(imgValue[x,y][0] < 64 and imgValue[x,y][1] > 128 and imgValue[x,y][2] < 64):
 
 				# coverage
-				coord_vals[x][y] = 2
+				# coordVals[x][y] = 2
 				covered_coordinates = op.add(covered_coordinates,1)
 				# print(2)
 
 			# if red value set 1, else set 0
 			if 	(imgValue[x,y][0] < 64 and imgValue[x,y][1] < 64 and imgValue[x,y][2] < 128):
 				# walls
-				coord_vals[x][y] = 1
+				# coordVals[x][y] = 1
 				imgValue[x,y] = (7, 0, 11)
 				# print(1)
 			else:
-				coord_vals[x][y] = 0
+				# coordVals[x][y] = 0
 				imgValue[x,y] = (255,255,255)
 				# print(0)
 
-			if coord_vals[x][y] != 1:
+			if coordVals[x][y] != 1:
 				coverable += 1
 
+	# method 1
 	coverage_percentage = covered_coordinates / total_coordinates
 	fitness = coverage_percentage - (unwanted_penalty/total_coordinates)
 	
+	# method 2
 	fitnessg = sum(gene_fitness) / coverable
 
 	# print(covered_coordinates)
 	# print(total_coordinates)
 	# print(unwanted_penalty)
-	print(fitness)
-	print(fitnessg)
+	print("Formula 1 fitness: ",fitness)
+	print("Formula 2 fitness: ",fitnessg)
 
-	print("\nfitness value calculated ...")
+	# print("\nfitness value calculated ...")
     
 	return fitnessg
     # Calculating the fitness value of each solution in the current population.
 	
 def select_mating_pool(pop, fitness, num_parents):
     # Selecting the best individuals in the current generation as parents for producing the offspring of the next generation.
-    parents = [[0 for i in range(num_parents)] for j in range(len(pop))]
+    # parents = [[0 for i in range(num_parents)] for j in range(len(pop))]
+    parents = []
     # parents = np.empty((num_parents, pop.shape[1]))
     for parent_num in range(num_parents):
         max_fitness_idx = np.where(fitness == np.max(fitness))
         max_fitness_idx = max_fitness_idx[0][0]
-        parents[parent_num] = pop[max_fitness_idx]
+        parents.append(pop[max_fitness_idx])
         fitness[max_fitness_idx] = -99999999
 
     print(f"parents: ",parents)
@@ -552,7 +560,7 @@ def mutation(pop,fitness):
 
 				if(isInside(circle_x, circle_y, rad, x, y)):
 					# print("Inside")
-					if gene_val[x][y] == 0 and coord_vals[x][y] != 1:
+					if gene_val[x][y] == 0 and coordVals[x][y] != 1:
 						gene_val[x][y] = 1
 						total_gene_val += gene_val[x][y]
 					else:
@@ -567,32 +575,22 @@ def mutation(pop,fitness):
 
 # driver function
 if __name__=="__main__":
-	# scale 1pixel:10cm  or 20pixel:6feet
+	# scale = 10 , 1pixel:10cm  or 20pixel:6feet
 
 	# Read floor plan image from the directory.
-
-	# reading the image
 	original_image = read_image()
 	raw_path = "art.png"
 
-	# identify image size
-	# Get the width and height of the image.
+	default_scale = 10
 
-	# h, w, _ = original_image.shape
-	# print('width: ', w)
-	# print('height:', h)
-
-	# img = area_remover(img)
 	# Use cv2.selectROI() to select areas that are not available 
-	# for CCTV placement (unwanted areas) and change their color to (0, 0, 64).
-
-	availableArea_image = selectROI_area(original_image)
-	
+	# for CCTV placement (unwanted areas) and change their color to (0, 0, 64) red.
 
 	# Use a loop for cv2.selectROI() until there are no unwanted areas left to select.
 	# area_valuer() loops through all the coordinates of the image, 
 	# assigning values: 0 for available areas, 1 for walls and unwanted areas.
 
+	availableArea_image = selectROI_area(original_image)
 
 	stop = False
 	while stop == False:
@@ -601,11 +599,11 @@ if __name__=="__main__":
 		k = cv2.waitKey(0)
 		if k == ord("s") or k == ord("S"):
 			stop = True
-			print("\nCalculating ...")
+			print("\nFinalizing available area ...")
 		else:
 			availableArea_image = selectROI_area(availableArea_image)
 
-	# img = selectROI_area(img)
+	cv2.destroyAllWindows()
 
 	# assign value to coord
 	# 1 = wall, remove
@@ -614,31 +612,26 @@ if __name__=="__main__":
 	# Implement area_valuer() to assign values in a 2D array 
 	# representing the coordinates in the resulting image from the selectROI() loop.
 
-	value = area_valuer(availableArea_image)
+	valuedImage  = areaValuer()
 
 	# print(len(value))
 	# print(len(value[0]))
 
 	# print(value[:2])
 
-	if cv2.imwrite('after.png', availableArea_image) == True:
-		print("\nafter.png saved")
-
-	default_scale = 10
-
-	# to initialize the CCTV quantity based on the available values and estimated total CCTV coverage.
-	pop_size = cctv_quantity_initializer(availableArea_image,default_scale)
-
-	sol_per_pop = 4
-	num_parents_mating = 2
-
-	# Implement rand_coords() to draw the CCTV coverage 
-	# with the color (0, 191, 0) for all generated random coordinates.
-	new_population = []
-	fitness = []
+	# if cv2.imwrite('after.png', availableArea_image) == True:
+	# 	print("\nafter.png saved")
 
 	
 
+	# to initialize the CCTV quantity (solution) based on the available values and estimated total CCTV coverage.
+	pop_size = initializeSol(default_scale)
+
+	
+
+	# Implement rand_coords() to draw the CCTV coverage 
+	# with the color (0, 191, 0) for all generated random coordinates.
+	
 	# print(f'Updated List after removing duplicates = {new_population}')
 
 	# Implement update_value() to update the value for all coordinates 
@@ -646,16 +639,30 @@ if __name__=="__main__":
 	# Coordinates with a value of 1 will turn the pixel black, 
 	# and coordinates with the color (0, 191, 0) will have a value of 2.
 	# Only coordinates with a value of 0 can be changed to 2 based on the color on the image.
-	update_value()
+	
+	# update_value()
 
 	# ---------------------------------------------------------
+	new_population = []
+	fitness = []
+	
+	sol_per_pop = 4
+	num_parents_mating = 2
+	
 	num_generations = 10
 	# for generation in range(num_generations):
 	# 	print("Generation : ", generation)
 	
 	for x in range(sol_per_pop):
-		new_population.append(rand_coords(pop_size,availableArea_image))
-		fitness.append(cal_pop_fitness(new_population[x]))
+		print("\n----------------------------------------------------------------")
+		print("\nChromosome " + str(x) + ":\n")
+		chr = randCoords(x,pop_size)
+		new_population.append(chr)
+
+		chrFitness = cal_pop_fitness(x,new_population[x])
+		fitness.append(chrFitness)
+
+		chrValue(x,chr)
 	
 	# fitness1 = cal_pop_fitness(new_population1)
 
@@ -671,7 +678,7 @@ if __name__=="__main__":
 	# print (math.dist(test[0],test[2]))
 
 # ---------------------------------------------------------
-print("\nProcessing Result ...")
+print("\n... System Terminated ...\n\n")
 
 
 
