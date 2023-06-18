@@ -263,12 +263,14 @@ def initializeSol(scale):
 
 	clear_area = (h * w) - wall
 
-	qty = round(clear_area / (1*(math.pi * math.pow((CCTV_RADIUS/scale),2))))
+	qty = round(clear_area / (0.8*(math.pi * math.pow((CCTV_RADIUS/scale),2))))
 	
 	print("\nInitializing cctv quantity: ", qty)
 	return qty
 
 def randCoords(index,max_cctv):
+
+	imgRaw = cv2.imread(raw_path,1)
 
 	# rand_val = [[0 for y in range(0,H)] for x in range(0,W)]
 
@@ -285,54 +287,17 @@ def randCoords(index,max_cctv):
 			if coordVals[randx][randy] != 1:
 
 				if rand not in rand_list:
-					####
-					# penalty = True
-
-					# if len(rand_list) == 1:
-
-					# 	while (penalty == True):
-					# 		if math.dist(rand_list[0],rand) < (MIN_DISTANCE/default_scale):
-					# 			if rand_list[0][0] < rand[0] and rand_list[0][1] < rand[1]:
-					# 				rand = ((rand[0]+1),(rand[1]+1))
-
-					# 			if rand_list[0][0] < rand[0] and rand_list[0][1] > rand[1]:
-					# 				rand = ((rand[0]+1),(rand[1]-1))
-
-					# 			if rand_list[0][0] > rand[0] and rand_list[0][1] < rand[1]:
-					# 				rand = ((rand[0]-1),(rand[1]+1))
-
-					# 			if rand_list[0][0] > rand[0] and rand_list[0][1] > rand[1]:
-					# 				rand = ((rand[0]-1),(rand[1]-1))
-					# 		else:
-					# 			penalty = False
-					# 	rand_list.append(rand)
-
-					# if len(rand_list) > 1:
-						
-
-					# 	for coord in rand_list:
-				
-					# 		while (penalty == True):
-					# 			if math.dist(coord,rand) < (MIN_DISTANCE/default_scale):
-					# 				if coord[0] < rand[0] and coord[1] < rand[1]:
-					# 					rand = ((rand[0]+1),(rand[1]+1))
-
-					# 				if coord[0] < rand[0] and coord[1] > rand[1]:
-					# 					rand = ((rand[0]+1),(rand[1]-1))
-
-					# 				if coord[0] > rand[0] and coord[1] < rand[1]:
-					# 					rand = ((rand[0]-1),(rand[1]+1))
-
-					# 				if coord[0] > rand[0] and coord[1] > rand[1]:
-					# 					rand = ((rand[0]-1),(rand[1]-1))
-					# 			else:
-					# 				penalty = False
-					# 		rand_list.append(rand)
-							
-
-					###
-					rand_list.append(rand)
-
+					
+					if 	(imgRaw[randx,randy][0] < 192 and imgRaw[randx,randy][1] < 192 and imgRaw[randx,randy][2] < 192):
+						randx = random.randint(50,W)
+						randy = random.randint(50,H)
+						rand = (randx,randy)
+					
+					else:
+						rand_list.append(rand)
+						radius = int(1.5*CCTV_RADIUS/default_scale) # DISTANCE BTWN GENES
+						imgRaw = circleArea(imgRaw, rand, radius, (0, 191, 0), -1)
+					
 				else:
 					randx = random.randint(0,W)
 					randy = random.randint(0,H)
@@ -556,22 +521,36 @@ def cal_pop_fitness(index,pop): # value[], randList[]
 
 	# print("\nfitness value calculated ...")
     
-	return fitnessg
+	return fitness
+	# return fitnessg
     # Calculating the fitness value of each solution in the current population.
 	
 def select_mating_pool(pop, fitness, num_parents):
-    # Selecting the best individuals in the current generation as parents for producing the offspring of the next generation.
-    # parents = [[0 for i in range(num_parents)] for j in range(len(pop))]
-    parents = []
-    # parents = np.empty((num_parents, pop.shape[1]))
-    for parent_num in range(num_parents):
-        max_fitness_idx = np.where(fitness == np.max(fitness))
-        max_fitness_idx = max_fitness_idx[0][0]
-        parents.append(pop[max_fitness_idx])
-        fitness[max_fitness_idx] = -99999999
+	# Selecting the best individuals in the current generation as parents for producing the offspring of the next generation.
+	parents = [0]*num_parents
+	# parents = np.array(pop)
+	# max_value = 0
 
-    print(f"parents: ",parents)
-    return parents
+	# RANK SELECTION
+	sort_index = np.argsort(fitness)
+	# print(sort_index)
+
+	sort_index = sort_index[::-1]
+	# print(sort_index)
+
+	for parent_num in range(num_parents):
+		parents[parent_num] = pop[sort_index[parent_num]]
+
+	# for parent_num in range(num_parents):
+		# if fitness[parent_num] < max_value:
+			
+			# max_value = fitness[parent_num]
+			# parents.append(pop[parent_num])
+
+	# print(f'',fitness)
+	print(f'',parents)
+
+	return parents
 
 def crossover(parents, offspring_size):
     offspring = np.empty(offspring_size)

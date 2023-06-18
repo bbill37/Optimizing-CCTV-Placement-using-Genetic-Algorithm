@@ -16,8 +16,9 @@ def cal_pop_fitness(equation_inputs, pop):
 
 def select_mating_pool(pop, fitness, num_parents):
     # print(f"pop: ",pop)
-    print(f"pop: ",pop.shape[0])
-    print(f"pop: ",pop.shape[1])
+    # print(f"pop: ",pop.shape[0])
+    # print(f"pop: ",pop.shape[1])
+    
     # Selecting the best individuals in the current generation as parents for producing the offspring of the next generation.
     parents = numpy.empty((num_parents, pop.shape[1]))
     # print(f"parents: ",parents)
