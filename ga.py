@@ -118,6 +118,8 @@ best_match_idx = numpy.where(fitness == numpy.max(fitness))
 print("Best solution : ", new_population[best_match_idx, :])
 print("Best solution fitness : ", fitness[best_match_idx])
 
+
+# -----------------------------------
 coord = (10,10)
 coord = ((coord[0]+1),(coord[1]+1))
 print(coord)
@@ -175,3 +177,9 @@ test_list = [5, 6, 3, 7, 8, 1, 2, 10]
  
 test_list.pop(4)
 print(test_list)
+
+import cv2
+best_image = cv2.imread('imgAreaOutline0.png')
+cv2.imshow('result',best_image)
+cv2.waitKey(0)
+cv2.destroyAllWindows

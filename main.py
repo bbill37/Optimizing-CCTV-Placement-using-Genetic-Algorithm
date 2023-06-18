@@ -582,8 +582,8 @@ def crossover(parents, offspring_size):
 
 def mutation(pop):
 
-	print(pop[0])
-	print(pop[1])
+	# print(pop[0])
+	# print(pop[1])
 
 	for chr in pop:
 
@@ -624,9 +624,9 @@ def mutation(pop):
 		min_val = min(gene_fitness)
 		min_fitness_idx = gene_fitness.index(min_val)
 
-		print(chr[min_fitness_idx]," : ",min_fitness_idx," : ",min_val)
+		# print(chr[min_fitness_idx]," : ",min_fitness_idx," : ",min_val)
 
-		print(gene_fitness)
+		# print(gene_fitness)
 
 		chr.pop(min_fitness_idx)
 
@@ -643,8 +643,10 @@ def mutation(pop):
 		# mutation, replace with new coord
 		chr.append(rand)
 
-	print(pop[0])
-	print(pop[1])
+	# print(pop[0])
+	# print(pop[1])
+
+	return pop
 
 # ------------------------------------------------------------------------------------------------------
 
@@ -728,6 +730,7 @@ if __name__=="__main__":
 	# for generation in range(num_generations):
 	# 	print("Generation : ", generation)
 	
+	# Measing the fitness of each chromosome in the population.
 	for x in range(sol_per_pop):
 		# print("\n----------------------------------------------------------------")
 		# print("\nChromosome " + str(x+1) + ":\n")
@@ -739,24 +742,42 @@ if __name__=="__main__":
 
 		chrValue(x,chr)
 	
-	# fitness1 = cal_pop_fitness(new_population1)
-
-	# Measing the fitness of each chromosome in the population.
-    # fitness = cal_pop_fitness(equation_inputs, new_population)
-    
+	# Selecting the best parents in the population for mating.
 	parents = select_mating_pool(new_population, fitness, num_parents_mating)
 
+	# Generating next generation using crossover.
 	offspring_crossover = crossover(parents,chr_size)
 
+	# Adding some variations to the offsrping using mutation.
 	offspring_mutation = mutation(offspring_crossover)
 
-	# print(randList[1])
+	# Creating the new population based on the parents and offspring.
+	new_population[0:1] = parents
+	new_population[2:] = offspring_mutation
 
-	# test = [(1,1),(5,5),(10,10)]
+	# print(new_population)
 
-	# print (math.dist(test[0],test[2]))
+	# The best result in the current iteration.
+	for x in range(sol_per_pop):
+		chrFitness = cal_pop_fitness(x,new_population[x])
+		fitness.append(chrFitness)
+		chrValue(x,chr)
+
+	best_chr_fitness = max(fitness)
+	best_chr_idx = fitness.index(best_chr_fitness)
+	best_chr = new_population[best_chr_idx]
+	print("Best result : ",best_chr)
+	print("Best fitness : ",fitness[best_chr_idx])
+
+	best_image_path = 'imgAreaOutline'+str(best_chr_idx)+'.png'
+	best_image = cv2.imread(best_image_path,1)
+	cv2.imshow('result',best_image)
 
 # ---------------------------------------------------------
+
+k = cv2.waitKey(0)
+if k == ord("s") or k == ord("S"):
+	cv2.destroyAllWindows
 print("\n... System Terminated ...\n\n")
 
 
