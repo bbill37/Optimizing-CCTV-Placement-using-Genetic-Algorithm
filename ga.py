@@ -18,7 +18,7 @@ def select_mating_pool(pop, fitness, num_parents):
     # print(f"pop: ",pop)
     # print(f"pop: ",pop.shape[0])
     # print(f"pop: ",pop.shape[1])
-    
+
     # Selecting the best individuals in the current generation as parents for producing the offspring of the next generation.
     parents = numpy.empty((num_parents, pop.shape[1]))
     # print(f"parents: ",parents)
@@ -121,3 +121,57 @@ print("Best solution fitness : ", fitness[best_match_idx])
 coord = (10,10)
 coord = ((coord[0]+1),(coord[1]+1))
 print(coord)
+
+# ---------------
+s = [1,2,3,4,5,6,7,8,9]
+p = [11,22,33,44,55,66,77,88,99]
+crossover_point=5
+
+a = []
+a = s[0:4]
+b = []
+b = p[0:4]
+j=9-crossover_point
+for i in range(crossover_point):
+    a.append(p[int(i+j)])
+    b.append(s[int(i+j)])
+    print(i)
+
+
+print("Parents")
+print("P1 :", a)
+print("P2 :", b, "\n")
+
+crossover_point = numpy.uint8(10/2)
+print(crossover_point)
+
+# -----------
+
+offspring = []
+offspring_size=11
+crossover_point = offspring_size-4 # index 6
+
+p1 = [(62, 369), (296, 54), (319, 569), (454, 72), (120, 545), (264, 207), (418, 314), (98, 68), (271, 398), (24, 676), (66, 216)]
+p2 = [(132, 115), (265, 410), (39, 538), (338, 635), (444, 310), (18, 214), (352, 85), (190, 267), (405, 492), (173, 617), (76, 381)]
+
+cd1 = p1[0:crossover_point]
+cd2 = p2[0:crossover_point]
+
+j=crossover_point # 7
+for i in range(offspring_size-crossover_point):
+	cd1.append(p2[int(i+j)])
+	cd2.append(p1[int(i+j)])
+
+offspring.append(cd1)
+offspring.append(cd2)
+
+print("p1: ",p1)
+print("p2: ",p2)
+print("\n")
+print("o1: ",offspring[0])
+print("o2: ",offspring[1])
+
+test_list = [5, 6, 3, 7, 8, 1, 2, 10]
+ 
+test_list.pop(4)
+print(test_list)

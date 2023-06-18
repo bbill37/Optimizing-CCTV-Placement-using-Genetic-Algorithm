@@ -72,7 +72,7 @@ def isInside(circle_x, circle_y, rad, x, y):
         return False;
 
 #function which returns the index of minimum value in the list
-def get_minvalue(inputlist):
+def get_minidx(inputlist):
  
     #get the minimum value in the list
     min_value = min(inputlist)
@@ -420,7 +420,7 @@ def chrValue(index,chrList):
 	# cv2.imwrite(image_path,raw_image)
 
 # genetic algorithm ----------------------------------------
-def cal_pop_fitness(index,pop): # value[], randList[]
+def cal_pop_fitness(index,chr): # value[], randList[]
 
 	rand_path = 'rand'+str(index)+'.png'
 	imgValue = cv2.imread(rand_path,1)
@@ -434,7 +434,7 @@ def cal_pop_fitness(index,pop): # value[], randList[]
 	gene_val = [[0 for y in range(0,H)] for x in range(0,W)]
 	gene_fitness = []
 
-	for gene in pop:
+	for gene in chr:
 		# Driver Code
 		# x = 1
 		# y = 1
@@ -544,69 +544,107 @@ def select_mating_pool(pop, fitness, num_parents):
 	# print(f'',fitness)
 	# print(f'',parents)
 
+	# min_index = []
+	# min_index.clear()
+
+	# for i in parents:
+	# 	min_fitness = min(fitness[i])
+	# 	min_index.append(parents.index(min_fitness))
+
+	# print(min_index)
+
 	return parents
 
 def crossover(parents, offspring_size):
-    offspring = np.empty(offspring_size)
-    # The point at which crossover takes place between two parents. Usually it is at the center.
-    crossover_point = np.uint8(offspring_size[1]/2)
+	# offspring = [0]*offspring_size
+	offspring = []
+	crossover_point = offspring_size-4 # index 6
 
-    for k in range(offspring_size[0]):
-        # Index of the first parent to mate.
-        parent1_idx = k%parents.shape[0]
-        # Index of the second parent to mate.
-        parent2_idx = (k+1)%parents.shape[0]
-        # The new offspring will have its first half of its genes taken from the first parent.
-        offspring[k, 0:crossover_point] = parents[parent1_idx, 0:crossover_point]
-        # The new offspring will have its second half of its genes taken from the second parent.
-        offspring[k, crossover_point:] = parents[parent2_idx, crossover_point:]
-    return offspring
+	p1 = parents[0]
+	p2 = parents[1]
 
-def mutation(pop,fitness):
+	cd1 = p1[0:crossover_point]
+	cd2 = p2[0:crossover_point]
 
-	min_fitness_idx = np.where(fitness == np.min(fitness))
-	x = pop[min_fitness_idx][0]
-	y = pop[min_fitness_idx][1]
+	j=crossover_point # 7
+	for i in range(offspring_size-crossover_point):
+		cd1.append(p2[int(i+j)])
+		cd2.append(p1[int(i+j)])
 
-	for gene in pop:
-		# Driver Code
-		# x = 1
-		# y = 1
-		circle_x = gene[0]
-		circle_y = gene[1]
-		rad = int(CCTV_RADIUS/default_scale)
-		total_gene_val = 0
-    
-		while (isInside(circle_x, circle_y, rad, x, y) == True):
+	offspring.append(cd1)
+	offspring.append(cd2)
+
+	# print("p1: ",p1)
+	# print("p2: ",p2,"\n")
+	# print("o1: ",offspring[0])
+	# print("o2: ",offspring[1])
+	return offspring
+
+def mutation(pop):
+
+	print(pop[0])
+	print(pop[1])
+
+	for chr in pop:
+
+		gene_val = [[0 for y in range(0,H)] for x in range(0,W)]
+		gene_fitness = []
+		for gene in chr:
+			circle_x = gene[0]
+			circle_y = gene[1]
+			rad = int(CCTV_RADIUS/default_scale)
+			total_gene_val = 0
+			gene_penalty = 0
+
+			
+
+			for x in range(0,W):
+				for y in range(0,H):
+
+					if(isInside(circle_x, circle_y, rad, x, y)):
+						# print("Inside")
+						# area cover not wall
+						if gene_val[x][y] == 0 and coordVals[x][y] != 1:
+							gene_val[x][y] = 1
+							total_gene_val += gene_val[x][y]
+
+						# area cover wall
+						if gene_val[x][y] == 0 and coordVals[x][y] == 1:
+							gene_penalty = op.add(gene_penalty,0.3)
+
+						# area overlap
+						if gene_val[x][y] > 0:
+							gene_val[x][y] += 1
+							gene_penalty = op.add(gene_penalty,0.3)
+
+			total_gene_val = total_gene_val - gene_penalty
+			gene_fitness.append(int(total_gene_val))
+
+		# mutation, remove least value coord
+		min_val = min(gene_fitness)
+		min_fitness_idx = gene_fitness.index(min_val)
+
+		print(chr[min_fitness_idx]," : ",min_fitness_idx," : ",min_val)
+
+		print(gene_fitness)
+
+		chr.pop(min_fitness_idx)
+
+		x = random.randint(0,W)
+		y = random.randint(0,H)
+		rand = (x,y)
+
+		while (gene_val[x][y] != 0):
+			
 			x = random.randint(0,W)
 			y = random.randint(0,H)
 			rand = (x,y)
 
-	gene_val = [[0 for y in range(0,H)] for x in range(0,W)]
-	for gene in pop:
-		# Driver Code
-		# x = 1
-		# y = 1
-		circle_x = gene[0]
-		circle_y = gene[1]
-		rad = int(CCTV_RADIUS/default_scale)
-		total_gene_val = 0
+		# mutation, replace with new coord
+		chr.append(rand)
 
-		for x in range(0,W):
-			for y in range(0,H):
-
-				if(isInside(circle_x, circle_y, rad, x, y)):
-					# print("Inside")
-					if gene_val[x][y] == 0 and coordVals[x][y] != 1:
-						gene_val[x][y] = 1
-						total_gene_val += gene_val[x][y]
-					else:
-						gene_val[x][y] += 1
-
-
-	# while (imgValue[x,y][0] < 64 and imgValue[x,y][1] > 128 and imgValue[x,y][2] < 64):
-
-
+	print(pop[0])
+	print(pop[1])
 
 # ------------------------------------------------------------------------------------------------------
 
@@ -662,7 +700,7 @@ if __name__=="__main__":
 	
 
 	# to initialize the CCTV quantity (solution) based on the available values and estimated total CCTV coverage.
-	pop_size = initializeSol(default_scale)
+	chr_size = initializeSol(default_scale)
 
 	
 
@@ -693,7 +731,7 @@ if __name__=="__main__":
 	for x in range(sol_per_pop):
 		# print("\n----------------------------------------------------------------")
 		# print("\nChromosome " + str(x+1) + ":\n")
-		chr = randCoords(x,pop_size)
+		chr = randCoords(x,chr_size)
 		new_population.append(chr)
 
 		chrFitness = cal_pop_fitness(x,new_population[x])
@@ -707,6 +745,10 @@ if __name__=="__main__":
     # fitness = cal_pop_fitness(equation_inputs, new_population)
     
 	parents = select_mating_pool(new_population, fitness, num_parents_mating)
+
+	offspring_crossover = crossover(parents,chr_size)
+
+	offspring_mutation = mutation(offspring_crossover)
 
 	# print(randList[1])
 
