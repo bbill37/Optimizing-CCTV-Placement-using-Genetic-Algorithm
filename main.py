@@ -265,7 +265,7 @@ def initializeSol(scale):
 
 	qty = round(clear_area / (0.8*(math.pi * math.pow((CCTV_RADIUS/scale),2))))
 	
-	print("\nInitializing cctv quantity: ", qty)
+	print("\nInitializing cctv quantity: ", qty, "\n")
 	return qty
 
 def randCoords(index,max_cctv):
@@ -355,8 +355,8 @@ def randCoords(index,max_cctv):
 	
 	#---------------------------------------------------
 	# img1 = cv2.imread('forest.png')
-	img2 = cv2.imread(raw_path)
-	dst = cv2.addWeighted(img2, 0.6, imgArea, 0.5, 0)
+	img2 = cv2.imread('bw.png',1)
+	dst = cv2.addWeighted(img2, 0.6, imgArea, 0.6, 0)
 
 	# img_arr = np.hstack((img, img2))
 	# cv2.imshow('Input Images',img_arr)
@@ -471,13 +471,14 @@ def cal_pop_fitness(index,pop): # value[], randList[]
 		total_gene_val = total_gene_val - gene_penalty
 		gene_fitness.append(int(total_gene_val))
 
-	print(f"gene_fitness: ",gene_fitness)
+	# print(f"gene_fitness: ",gene_fitness)
 
+	# NORMAL METHOD
 	for x in range(0,W):
 		for y in range(0,H):
 		
 			# if dark green value 1, penalty wall
-			if 	(imgValue[x,y][0] < 64 and imgValue[x,y][1] > 64 and imgValue[x,y][2] < 64 and coordVals[x][y] == 1):
+			if 	(imgValue[x,y][0] < 64 and imgValue[x,y][1] > 64 and imgValue[x,y][2] < 64):
 				unwanted_penalty = op.add(unwanted_penalty,1)
 				# print(1)
 
@@ -491,20 +492,13 @@ def cal_pop_fitness(index,pop): # value[], randList[]
 				total_coordinates = op.add(total_coordinates,1)
 				# print(2)
 
-			# if red value set 1, else set 0
-			if 	(imgValue[x,y][0] < 64 and imgValue[x,y][1] < 64 and imgValue[x,y][2] < 128):
-				# walls
-				# coordVals[x][y] = 1
-				imgValue[x,y] = (7, 0, 11)
-				# print(1)
-			else:
-				# coordVals[x][y] = 0
-				imgValue[x,y] = (255,255,255)
-				total_coordinates = op.add(total_coordinates,1)
-				# print(0)
-
 			if coordVals[x][y] != 1:
+				# coordVals[x][y] = 0
+				# imgValue[x,y] = (255,255,255)
+				total_coordinates = op.add(total_coordinates,1)
 				coverable += 1
+				# print(0)
+				
 
 	# method 1
 	coverage_percentage = covered_coordinates / total_coordinates
@@ -516,8 +510,8 @@ def cal_pop_fitness(index,pop): # value[], randList[]
 	# print(covered_coordinates)
 	# print(total_coordinates)
 	# print(unwanted_penalty)
-	print("Formula 1 fitness: ",fitness)
-	print("Formula 2 fitness: ",fitnessg)
+	# print("Formula 1 fitness: ",fitness)
+	# print("Formula 2 fitness: ",fitnessg)
 
 	# print("\nfitness value calculated ...")
     
@@ -548,7 +542,7 @@ def select_mating_pool(pop, fitness, num_parents):
 			# parents.append(pop[parent_num])
 
 	# print(f'',fitness)
-	print(f'',parents)
+	# print(f'',parents)
 
 	return parents
 
@@ -697,8 +691,8 @@ if __name__=="__main__":
 	# 	print("Generation : ", generation)
 	
 	for x in range(sol_per_pop):
-		print("\n----------------------------------------------------------------")
-		print("\nChromosome " + str(x+1) + ":\n")
+		# print("\n----------------------------------------------------------------")
+		# print("\nChromosome " + str(x+1) + ":\n")
 		chr = randCoords(x,pop_size)
 		new_population.append(chr)
 
