@@ -773,6 +773,19 @@ if __name__=="__main__":
 	print("Best fitness : ",fitness[best_chr_idx])
 	print("Average fitness : ",average_fitness)
 
+	# write result, fitness, average to text file
+	bestResult = open("RESULT.txt", "a")
+	bestResult.write(best_chr_fitness)
+	bestResult.close()
+
+	bestFitness = open("FITNESS.txt", "a")
+	bestFitness.write("Now the file has more content!")
+	bestFitness.close(fitness[best_chr_idx])
+
+	avgFitness = open("AVERAGE.txt", "a")
+	avgFitness.write(average_fitness)
+	avgFitness.close()
+
 	best_image_path = 'imgAreaOutline'+str(best_chr_idx)+'.png'
 	best_image = cv2.imread(best_image_path,1)
 	cv2.imshow('result',best_image)
