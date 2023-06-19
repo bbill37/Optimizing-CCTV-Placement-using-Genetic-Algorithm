@@ -742,6 +742,7 @@ if __name__=="__main__":
 
 		chrValue(x,chr)
 	
+	
 	# Selecting the best parents in the population for mating.
 	parents = select_mating_pool(new_population, fitness, num_parents_mating)
 
@@ -763,11 +764,14 @@ if __name__=="__main__":
 		fitness.append(chrFitness)
 		chrValue(x,chr)
 
+	average_fitness = sum(fitness) / len(fitness)
+
 	best_chr_fitness = max(fitness)
 	best_chr_idx = fitness.index(best_chr_fitness)
 	best_chr = new_population[best_chr_idx]
 	print("Best result : ",best_chr)
 	print("Best fitness : ",fitness[best_chr_idx])
+	print("Average fitness : ",average_fitness)
 
 	best_image_path = 'imgAreaOutline'+str(best_chr_idx)+'.png'
 	best_image = cv2.imread(best_image_path,1)
