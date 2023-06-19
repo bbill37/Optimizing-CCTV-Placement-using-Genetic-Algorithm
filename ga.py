@@ -127,6 +127,10 @@ print(coord)
 # ---------------
 s = [1,2,3,4,5,6,7,8,9]
 p = [11,22,33,44,55,66,77,88,99]
+s[:2] = p[-2:]
+s[6:] = p[:3]
+print(s)
+# print(d)
 crossover_point=5
 
 a = []
@@ -147,39 +151,39 @@ print("P2 :", b, "\n")
 crossover_point = numpy.uint8(10/2)
 print(crossover_point)
 
-# -----------
+# # -----------
 
-offspring = []
-offspring_size=11
-crossover_point = offspring_size-4 # index 6
+# offspring = []
+# offspring_size=11
+# crossover_point = offspring_size-4 # index 6
 
-p1 = [(62, 369), (296, 54), (319, 569), (454, 72), (120, 545), (264, 207), (418, 314), (98, 68), (271, 398), (24, 676), (66, 216)]
-p2 = [(132, 115), (265, 410), (39, 538), (338, 635), (444, 310), (18, 214), (352, 85), (190, 267), (405, 492), (173, 617), (76, 381)]
+# p1 = [(62, 369), (296, 54), (319, 569), (454, 72), (120, 545), (264, 207), (418, 314), (98, 68), (271, 398), (24, 676), (66, 216)]
+# p2 = [(132, 115), (265, 410), (39, 538), (338, 635), (444, 310), (18, 214), (352, 85), (190, 267), (405, 492), (173, 617), (76, 381)]
 
-cd1 = p1[0:crossover_point]
-cd2 = p2[0:crossover_point]
+# cd1 = p1[0:crossover_point]
+# cd2 = p2[0:crossover_point]
 
-j=crossover_point # 7
-for i in range(offspring_size-crossover_point):
-	cd1.append(p2[int(i+j)])
-	cd2.append(p1[int(i+j)])
+# j=crossover_point # 7
+# for i in range(offspring_size-crossover_point):
+# 	cd1.append(p2[int(i+j)])
+# 	cd2.append(p1[int(i+j)])
 
-offspring.append(cd1)
-offspring.append(cd2)
+# offspring.append(cd1)
+# offspring.append(cd2)
 
-print("p1: ",p1)
-print("p2: ",p2)
-print("\n")
-print("o1: ",offspring[0])
-print("o2: ",offspring[1])
+# print("p1: ",p1)
+# print("p2: ",p2)
+# print("\n")
+# print("o1: ",offspring[0])
+# print("o2: ",offspring[1])
 
-test_list = [5, 6, 3, 7, 8, 1, 2, 10]
+# test_list = [5, 6, 3, 7, 8, 1, 2, 10]
  
-test_list.pop(4)
-print(test_list)
+# test_list.pop(4)
+# print(test_list)
 
-import cv2
-best_image = cv2.imread('imgAreaOutline0.png')
-cv2.imshow('result',best_image)
-cv2.waitKey(0)
-cv2.destroyAllWindows
+# import cv2
+# best_image = cv2.imread('imgAreaOutline0.png')
+# cv2.imshow('result',best_image)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows

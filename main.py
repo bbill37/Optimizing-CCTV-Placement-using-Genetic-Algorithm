@@ -8,6 +8,7 @@ import random
 import numpy as np
 from array import *
 import operator as op
+import os
 
 # ------------------------------------------------------------
 
@@ -88,6 +89,8 @@ coords = []
 value = []
 default_scale = 1
 
+qtyRate = 1.0
+
 img = cv2.imread(raw_path, 1)
 w, h, c = img.shape
 W = w-1
@@ -98,6 +101,13 @@ coordVals = [[0 for y in range(0,H)] for x in range(0,W)]
 CCTV_RADIUS = 1000
 MIN_DISTANCE = 900
 MAX_DISTANCE = 1100
+
+if os.path.exists("RESULT.txt"):
+	os.remove("RESULT.txt")
+if os.path.exists("FITNESS.txt"):
+	os.remove("FITNESS.txt")
+if os.path.exists("AVERAGE.txt"):
+	os.remove("AVERAGE.txt")
 
 # read floor plan image -------------------------
 def read_image():
@@ -263,14 +273,14 @@ def initializeSol(scale):
 
 	clear_area = (h * w) - wall
 
-	qty = round(clear_area / (0.8*(math.pi * math.pow((CCTV_RADIUS/scale),2))))
+	qty = round(clear_area / (qtyRate*(math.pi * math.pow((CCTV_RADIUS/scale),2))))
 	
 	print("\nInitializing cctv quantity: ", qty, "\n")
 	return qty
 
 def randCoords(index,max_cctv):
 
-	imgRaw = cv2.imread(raw_path,1)
+	imgOutline = cv2.imread(raw_path,1)
 
 	# rand_val = [[0 for y in range(0,H)] for x in range(0,W)]
 
@@ -288,7 +298,7 @@ def randCoords(index,max_cctv):
 
 				if rand not in rand_list:
 					
-					if 	(imgRaw[randx,randy][0] < 192 and imgRaw[randx,randy][1] < 192 and imgRaw[randx,randy][2] < 192):
+					if 	(imgOutline[randx,randy][0] < 192 and imgOutline[randx,randy][1] < 192 and imgOutline[randx,randy][2] < 192):
 						randx = random.randint(50,W)
 						randy = random.randint(50,H)
 						rand = (randx,randy)
@@ -296,7 +306,7 @@ def randCoords(index,max_cctv):
 					else:
 						rand_list.append(rand)
 						radius = int(1.5*CCTV_RADIUS/default_scale) # DISTANCE BTWN GENES
-						imgRaw = circleArea(imgRaw, rand, radius, (0, 191, 0), -1)
+						imgOutline = circleArea(imgOutline, rand, radius, (0, 191, 0), -1)
 					
 				else:
 					randx = random.randint(0,W)
@@ -323,21 +333,20 @@ def randCoords(index,max_cctv):
 		# rand[1],rand[0] for image !!!!!!!!!!!
 		imgArea = circleArea(imgArea, rand, radius, (0, 191, 0), -1)
 
-	image_path = 'imgArea' + str(index) + '.png'
-	cv2.imwrite(image_path,imgArea)
+	cv2.imwrite(('imgArea' + str(index) + '.png'),imgArea)
 	# cv2.imwrite('imgArea.png',imgArea)
 
-	imgRaw = cv2.imread(raw_path)
+	imgOutline = cv2.imread(raw_path)
 	i = 1
 	for rand in rand_list:
 
 		# rand[1],rand[0] for image !!!!!!!!!!!
-		imgAreaOutline = circleArea(imgRaw, rand, radius, (0, 128, 0), 1)
-		imgAreaOutline = circleCoord(imgRaw, rand, 2, (191, 0, 0), -1)
-		cv2.putText(imgRaw, str(i), (rand[1],rand[0]), cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, 0.5, (0, 0, 255), 1)
+		imgOutline = circleArea(imgOutline, rand, radius, (0, 128, 0), 1)
+		imgOutline = circleCoord(imgOutline, rand, 2, (191, 0, 0), -1)
+		cv2.putText(imgOutline, str(i), (rand[1],rand[0]), cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, 0.5, (0, 0, 255), 1)
 		i += 1
 
-	cv2.imwrite(('imgAreaOutline' + str(index) + '.png'),imgAreaOutline)
+	cv2.imwrite(('imgAreaOutline' + str(index) + '.png'),imgOutline)
 	
 
 	imgCoord = cv2.imread(raw_path)
@@ -434,7 +443,19 @@ def cal_pop_fitness(index,chr): # value[], randList[]
 	gene_val = [[0 for y in range(0,H)] for x in range(0,W)]
 	gene_fitness = []
 
+	radius = int(CCTV_RADIUS/default_scale)
+	imgArea = cv2.imread(raw_path)
+	imgOutline = cv2.imread(raw_path)
+	i=1
+
 	for gene in chr:
+		
+		imgArea = circleArea(imgArea, gene, radius, (0, 191, 0), -1)
+		imgOutline = circleArea(imgOutline, gene, radius, (0, 128, 0), 1)
+		imgOutline = circleCoord(imgOutline, gene, 2, (191, 0, 0), -1)
+		cv2.putText(imgOutline, str(i), (gene[1],gene[0]), cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, 0.5, (0, 0, 255), 1)
+		i += 1
+
 		# Driver Code
 		# x = 1
 		# y = 1
@@ -470,6 +491,9 @@ def cal_pop_fitness(index,chr): # value[], randList[]
 
 		total_gene_val = total_gene_val - gene_penalty
 		gene_fitness.append(int(total_gene_val))
+
+	cv2.imwrite(('imgArea' + str(index) + '.png'),imgArea)
+	cv2.imwrite(('imgAreaOutline' + str(index) + '.png'),imgOutline)
 
 	# print(f"gene_fitness: ",gene_fitness)
 
@@ -526,11 +550,12 @@ def select_mating_pool(pop, fitness, num_parents):
 	# max_value = 0
 
 	# RANK SELECTION
+	# sort_index = np.empty()
 	sort_index = np.argsort(fitness)
-	# print(sort_index)
+	print(sort_index)
 
 	sort_index = sort_index[::-1]
-	# print(sort_index)
+	print(sort_index)
 
 	for parent_num in range(num_parents):
 		parents[parent_num] = pop[sort_index[parent_num]]
@@ -558,7 +583,7 @@ def select_mating_pool(pop, fitness, num_parents):
 def crossover(parents, offspring_size):
 	# offspring = [0]*offspring_size
 	offspring = []
-	crossover_point = offspring_size-4 # index 6
+	crossover_point = int(offspring_size/2) # index 6
 
 	p1 = parents[0]
 	p2 = parents[1]
@@ -723,17 +748,15 @@ if __name__=="__main__":
 	new_population = []
 	fitness = []
 	
-	sol_per_pop = 4
+	sol_per_pop = 8
 	num_parents_mating = 2
-	
-	num_generations = 10
-	# for generation in range(num_generations):
-	# 	print("Generation : ", generation)
-	
+
+	best_sol_fitness = -99999
+	best_sol_idx = 0
+	best_sol = []
+
 	# Measing the fitness of each chromosome in the population.
 	for x in range(sol_per_pop):
-		# print("\n----------------------------------------------------------------")
-		# print("\nChromosome " + str(x+1) + ":\n")
 		chr = randCoords(x,chr_size)
 		new_population.append(chr)
 
@@ -742,51 +765,99 @@ if __name__=="__main__":
 
 		chrValue(x,chr)
 	
+	num_generations = 1
+	for generation in range(num_generations):
+		print("Generation : ", generation+1,"\n")
+
+		# print(new_population)
 	
-	# Selecting the best parents in the population for mating.
-	parents = select_mating_pool(new_population, fitness, num_parents_mating)
+		# # Measing the fitness of each chromosome in the population.
+		# for x in range(sol_per_pop):
+		# 	chr = randCoords(x,chr_size)
+		# 	new_population.append(chr)
 
-	# Generating next generation using crossover.
-	offspring_crossover = crossover(parents,chr_size)
+		# 	chrFitness = cal_pop_fitness(x,new_population[x])
+		# 	fitness.append(chrFitness)
 
-	# Adding some variations to the offsrping using mutation.
-	offspring_mutation = mutation(offspring_crossover)
+		# 	chrValue(x,chr)
+		
+		
+		# Selecting the best parents in the population for mating.
+		parents = select_mating_pool(new_population, fitness, num_parents_mating)
 
-	# Creating the new population based on the parents and offspring.
-	new_population[0:1] = parents
-	new_population[2:] = offspring_mutation
+		# Generating next generation using crossover.
+		offspring_crossover = crossover(parents,chr_size)
 
-	# print(new_population)
+		# Adding some variations to the offsrping using mutation.
+		offspring_mutation = mutation(offspring_crossover)
 
-	# The best result in the current iteration.
-	for x in range(sol_per_pop):
-		chrFitness = cal_pop_fitness(x,new_population[x])
-		fitness.append(chrFitness)
-		chrValue(x,chr)
+		# Creating the new population based on the parents and offspring.
 
-	average_fitness = sum(fitness) / len(fitness)
+		sort_index = np.argsort(fitness)
+		# print(sort_index)
 
-	best_chr_fitness = max(fitness)
-	best_chr_idx = fitness.index(best_chr_fitness)
-	best_chr = new_population[best_chr_idx]
-	print("Best result : ",best_chr)
-	print("Best fitness : ",fitness[best_chr_idx])
-	print("Average fitness : ",average_fitness)
+		sort_index = sort_index[::-1]
+		# print(sort_index)
 
-	# write result, fitness, average to text file
-	bestResult = open("RESULT.txt", "a")
-	bestResult.write(best_chr_fitness)
-	bestResult.close()
+		survival_pop = []
 
-	bestFitness = open("FITNESS.txt", "a")
-	bestFitness.write("Now the file has more content!")
-	bestFitness.close(fitness[best_chr_idx])
+		for sol_num in range(sol_per_pop):
+			survival_pop.append(new_population[sort_index[sol_num]])
 
-	avgFitness = open("AVERAGE.txt", "a")
-	avgFitness.write(average_fitness)
-	avgFitness.close()
+		new_population = survival_pop
 
-	best_image_path = 'imgAreaOutline'+str(best_chr_idx)+'.png'
+		new_population[-4:-2] = parents[-2:]
+		new_population[-2:] = offspring_mutation[-2:]
+
+		# print(new_population)
+
+		fitness.clear()
+
+		# The best result in the current iteration.
+		for x in range(sol_per_pop):
+			chrFitness = cal_pop_fitness(x,new_population[x])
+			fitness.append(chrFitness)
+			chrValue(x,chr)
+
+		average_fitness = sum(fitness) / len(fitness)
+
+		best_chr_fitness = max(fitness)
+		best_chr_idx = fitness.index(best_chr_fitness)
+		best_chr = new_population[best_chr_idx]
+		
+		print("\nBest result : ",best_chr)
+		print("Best fitness : ",best_chr_fitness)
+		print("Average fitness : ",average_fitness,"\n")
+
+		# update result, fitness, average
+
+		if best_chr_fitness > best_sol_fitness:
+			best_sol_fitness = best_chr_fitness
+			best_sol_idx = best_chr_idx
+			best_sol = best_chr
+
+		# write result, fitness, average to text file PER GENERATION
+		bestResult = open("RESULT.txt", "a")
+		bestResult.write(str(best_chr)+"\n")
+		bestResult.close()
+
+		bestFitness = open("FITNESS.txt", "a")
+		bestFitness.write(str(best_chr_fitness)+"\n")
+		bestFitness.close()
+
+		avgFitness = open("AVERAGE.txt", "a")
+		avgFitness.write(str(average_fitness)+"\n")
+		avgFitness.close()
+
+		# generation end
+	
+	# Getting the best solution after iterating finishing all generations.
+	print("Best solution : ",best_sol)
+	print("Best fitness : ",best_sol_fitness)
+
+	# ---------------------------------------------------------
+
+	best_image_path = 'imgAreaOutline'+str(best_sol_idx)+'.png'
 	best_image = cv2.imread(best_image_path,1)
 	cv2.imshow('result',best_image)
 
