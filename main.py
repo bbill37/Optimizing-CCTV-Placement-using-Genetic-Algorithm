@@ -85,16 +85,20 @@ def get_minidx(inputlist):
 
 # declaration
 raw_path = "art.png"
+# raw_path = "parking.png"
 coords = []
 value = []
 default_scale = 1
 
-qtyRate = 1.0
+qtyRate = 0.9
 
 img = cv2.imread(raw_path, 1)
 w, h, c = img.shape
 W = w-1
 H = h-1
+
+print(W)
+print(H)
 
 coordVals = [[0 for y in range(0,H)] for x in range(0,W)]
 
@@ -223,7 +227,7 @@ def area_remover(img): # NOT USING
 # area value assigner APPROVED
 def areaValuer():
 
-	availableImage = cv2.imread('availableArea.png',1)
+	availableImage = cv2.imread('result/availableArea.png',1)
 
 	for x in range(0,W):
 		for y in range(0,H):
@@ -242,7 +246,7 @@ def areaValuer():
 				coordVals[x][y] = 0
 				availableImage[x,y] = (255,255,255) # pure white
 
-	valuedImage = cv2.imwrite('bw.png',availableImage)
+	valuedImage = cv2.imwrite('result/bw.png',availableImage)
 
 	if pd.DataFrame(coordVals).to_csv('coordVals.csv')==True: 
 		print("coordVals.csv saved")
@@ -255,7 +259,7 @@ def selectROI_area(image):
 	image = cv2.rectangle(image, (int(r[0]),int(r[1])), 
 		(int(r[0]+r[2]),int(r[1]+r[3])), (0,0,64), -1)
 
-	if cv2.imwrite('availableArea.png', image) == True:
+	if cv2.imwrite('result/availableArea.png', image) == True:
 		print("\navailableArea.png updated")
 
 	return image
@@ -309,18 +313,18 @@ def randCoords(index,max_cctv):
 						imgOutline = circleArea(imgOutline, rand, radius, (0, 191, 0), -1)
 					
 				else:
-					randx = random.randint(0,W)
-					randy = random.randint(0,H)
+					randx = random.randint(50,W)
+					randy = random.randint(50,H)
 					rand = (randx,randy)
 
 			else:
-				randx = random.randint(0,W)
-				randy = random.randint(0,H)
+				randx = random.randint(50,W)
+				randy = random.randint(50,H)
 				rand = (randx,randy)
 				
 		else:
-			randx = random.randint(0,W)
-			randy = random.randint(0,H)
+			randx = random.randint(50,W)
+			randy = random.randint(50,H)
 			rand = (randx,randy)
 	
 	print("Random Coordinates Generated ...\n")
@@ -333,7 +337,7 @@ def randCoords(index,max_cctv):
 		# rand[1],rand[0] for image !!!!!!!!!!!
 		imgArea = circleArea(imgArea, rand, radius, (0, 191, 0), -1)
 
-	cv2.imwrite(('imgArea' + str(index) + '.png'),imgArea)
+	cv2.imwrite(('result/imgArea' + str(index) + '.png'),imgArea)
 	# cv2.imwrite('imgArea.png',imgArea)
 
 	imgOutline = cv2.imread(raw_path)
@@ -346,7 +350,7 @@ def randCoords(index,max_cctv):
 		cv2.putText(imgOutline, str(i), (rand[1],rand[0]), cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, 0.5, (0, 0, 255), 1)
 		i += 1
 
-	cv2.imwrite(('imgAreaOutline' + str(index) + '.png'),imgOutline)
+	cv2.imwrite(('result/imgAreaOutline' + str(index) + '.png'),imgOutline)
 	
 
 	imgCoord = cv2.imread(raw_path)
@@ -365,7 +369,7 @@ def randCoords(index,max_cctv):
 	#---------------------------------------------------
 	# img1 = cv2.imread('forest.png')
 	img2 = cv2.imread('bw.png',1)
-	dst = cv2.addWeighted(img2, 0.6, imgArea, 0.6, 0)
+	dst = cv2.addWeighted(img2, 0.6, imgArea, 0.6,0)
 
 	# img_arr = np.hstack((img, img2))
 	# cv2.imshow('Input Images',img_arr)
@@ -375,7 +379,7 @@ def randCoords(index,max_cctv):
 	# cv2.destroyAllWindows()
 	#---------------------------------------------------
 	
-	cv2.imwrite('rand'+str(index)+'.png',dst) # double exposure image
+	cv2.imwrite('result/rand'+str(index)+'.png',dst) # double exposure image
 
 	return rand_list
 
@@ -387,7 +391,7 @@ def chrValue(index,chrList):
 		# rand[1],rand[0] for image !!!!!!!!!!!
 		avlImg = circleArea(avlImg, chr, radius, (0, 191, 0), -1)
 	
-	image_path = ('imgArea') + str(index) + '.png'
+	image_path = ('result/imgArea') + str(index) + '.png'
 	img = cv2.imread(image_path,1)
 
 	for x in range(0,W):
@@ -405,7 +409,7 @@ def chrValue(index,chrList):
 				# walls
 				img[x,y] = (255, 255, 255)
 
-	image_path = ('imageValue') + str(index) + '.png'
+	image_path = ('result/imageValue') + str(index) + '.png'
 	cv2.imwrite(image_path,img)
 
 	raw_image = cv2.imread(raw_path)
@@ -425,13 +429,13 @@ def chrValue(index,chrList):
 				raw_image[x,y] = (255, 255, 255)
 
 	# cv2.imwrite('rawValue.png',raw_image)
-	image_path = 'rawValue' + str(index) + '.png'
+	image_path = 'result/rawValue' + str(index) + '.png'
 	# cv2.imwrite(image_path,raw_image)
 
 # genetic algorithm ----------------------------------------
 def cal_pop_fitness(index,chr): # value[], randList[]
 
-	rand_path = 'rand'+str(index)+'.png'
+	rand_path = 'result/rand'+str(index)+'.png'
 	imgValue = cv2.imread(rand_path,1)
 
 	fitness = 0
@@ -492,8 +496,8 @@ def cal_pop_fitness(index,chr): # value[], randList[]
 		total_gene_val = total_gene_val - gene_penalty
 		gene_fitness.append(int(total_gene_val))
 
-	cv2.imwrite(('imgArea' + str(index) + '.png'),imgArea)
-	cv2.imwrite(('imgAreaOutline' + str(index) + '.png'),imgOutline)
+	cv2.imwrite(('result/imgArea' + str(index) + '.png'),imgArea)
+	cv2.imwrite(('result/imgAreaOutline' + str(index) + '.png'),imgOutline)
 
 	# print(f"gene_fitness: ",gene_fitness)
 
@@ -655,14 +659,14 @@ def mutation(pop):
 
 		chr.pop(min_fitness_idx)
 
-		x = random.randint(0,W)
-		y = random.randint(0,H)
+		x = random.randint(50,W)
+		y = random.randint(50,H)
 		rand = (x,y)
 
 		while (gene_val[x][y] != 0):
 			
-			x = random.randint(0,W)
-			y = random.randint(0,H)
+			x = random.randint(50,W)
+			y = random.randint(50,H)
 			rand = (x,y)
 
 		# mutation, replace with new coord
@@ -681,7 +685,7 @@ if __name__=="__main__":
 
 	# Read floor plan image from the directory.
 	original_image = read_image()
-	raw_path = "art.png"
+	# raw_path = "art.png"
 
 	default_scale = 10
 
@@ -857,9 +861,19 @@ if __name__=="__main__":
 
 	# ---------------------------------------------------------
 
-	best_image_path = 'imgAreaOutline'+str(best_sol_idx)+'.png'
-	best_image = cv2.imread(best_image_path,1)
-	cv2.imshow('result',best_image)
+	radius = int(CCTV_RADIUS/default_scale)
+	i=1
+	bestSolImg = cv2.imread(raw_path,1)
+	for gene in best_sol:
+		bestSolImg = circleArea(bestSolImg, gene, radius, (0, 128, 0), 1)
+		bestSolImg = circleCoord(bestSolImg, gene, 2, (191, 0, 0), -1)
+		cv2.putText(bestSolImg, str(gene[1])+","+str(gene[0]), (gene[1],gene[0]), cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, 0.5, (0, 0, 255), 1)
+		i += 1
+
+	best_image_path = 'result/bestSolImg.png'
+	cv2.imwrite(best_image_path,bestSolImg)
+	# best_image = cv2.imread(best_image_path,1)
+	cv2.imshow('result',bestSolImg)
 
 # ---------------------------------------------------------
 
