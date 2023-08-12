@@ -1,47 +1,105 @@
-from PIL import Image, ImageDraw
+# initial_population = [1,2,3,4,5,6,7,8]
+# parents = [11,22]
+# offspring_mutation = [88,99]
 
-def add_cctv_coordinates(image_path, coordinates):
-    # Open the image file
-    image = Image.open(image_path)
+# current_population = initial_population
 
-    # Create a copy of the image to draw on
-    draw_image = image.copy()
-    draw = ImageDraw.Draw(draw_image)
+# current_population[-4:-2] = parents[-2:]
+# current_population[-2:] = offspring_mutation[-2:]
 
-    # Iterate over the coordinates and add the CCTV markers
-    for coord in coordinates:
-        # Calculate the center point of the rectangle
-        center_x = int((coord[0][0] + coord[2][0]) / 2)
-        center_y = int((coord[0][1] + coord[2][1]) / 2)
+# print(current_population)
 
-        # Draw a small triangle as the CCTV coordinate
-        triangle_size = 5
-        triangle_coords = [
-            (center_x, center_y - triangle_size),
-            (center_x - triangle_size, center_y + triangle_size),
-            (center_x + triangle_size, center_y + triangle_size)
-        ]
-        draw.polygon(triangle_coords, fill="red")
+# value = []
 
-        # Draw a circle around the triangle with a distance of 10 pixels
-        circle_radius = 50
-        circle_coords = (
-            center_x - circle_radius,
-            center_y - circle_radius,
-            center_x + circle_radius,
-            center_y + circle_radius
-        )
-        draw.ellipse(circle_coords, outline="red")
+# def LastNlines(fname, N):
+# 	# opening file using with() method
+# 	# so that file get closed
+# 	# after completing work
+#     with open(fname) as file:
+#         for line in file:
+#             pass
+#         last_line = line
 
-    # Save the image with the CCTV markers
-    marked_image_path = "marked_image.png"  # Path to save the marked image
-    draw_image.save(marked_image_path)
+#         # print(last_line)
 
-    return marked_image_path
+#     return last_line
 
-# Example usage
-image_path = "floor_plan1.png"  # Replace with the path to your image file
-coordinates = [((100, 100), (100, 200), (200, 200), (200, 100))]  # Replace with your detected coordinates
-marked_image_path = add_cctv_coordinates(image_path, coordinates)
-print("Image with CCTV coordinates saved at:", marked_image_path)
+# 	# with open(fname) as file:
+		
+# 	# 	# loop to read iterate
+# 	# 	# last n lines and print it
+# 	# 	for line in (file.readlines() [-N:]):
+# 	# 		print(line, end ='')
 
+# # Driver Code:
+# if __name__ == '__main__':
+# 	fname = 'File1.txt'
+# 	N = 2
+# 	try:
+# 		LastNlines(fname, N)
+# 	except:
+# 		print('File not found')
+                
+# print(LastNlines(fname, N))
+
+# idx =  [(256, 295), (188, 179), (268, 75), (96, 425), (308, 140), (117, 327), (323, 313), (295, 202)]
+# for x in idx:
+#       if x != idx[5] and x != idx[6]:
+#             print(x)
+            
+# idx[5] = (1234,3455)
+# print(idx)
+
+def last_two_min_indices(lst):
+    sorted_indices = sorted(range(len(lst)), key=lambda i: lst[i])
+    last_two_indices = sorted_indices[:2]
+    return last_two_indices
+
+# Example usage:
+my_list = [10, 5, 8, 3, 12, 7]
+result = last_two_min_indices(my_list)
+print("Indices of the last two minimum values:", result)
+
+# best_chr_fitness = 0.350183250923
+# previous_fitness = 0.232576294324
+
+# convergence = abs(best_chr_fitness - previous_fitness)
+
+# print(convergence)
+
+# mylist = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm']
+# def rt (lis): 
+# 	first4 = lis[:2] 
+# 	last4 = lis[-2:] 
+# 	first4.extend(last4) 
+# 	return (first4)
+
+# print(rt(mylist))
+
+# for i in range(4):
+# 	print(i)
+
+fitness_values = [12321.421, 1321421.3213, 13124.31231, 123124.2141, 12.432, 312.432, 321345,412341, 4124,534135,52345234,35113]
+
+li=[]
+ 
+for i in range(len(fitness_values)):
+      li.append([fitness_values[i],i])
+li.sort()
+sort_index = []
+ 
+for x in li:
+      sort_index.append(x[1])
+ 
+print(sort_index)
+
+last_two_indices = sort_index[:2]
+first_two_indices = sort_index[-2:]
+indices = last_two_indices + first_two_indices
+print(indices)
+
+# sorted_indices = sorted(range(len(fitness_values)), key=lambda i: fitness_values[i])
+# last_two_indices = sorted_indices[:2]
+# first_two_indices = sorted_indices[-2:]
+# indices = first_two_indices.extend(last_two_indices)
+# print(indices)
