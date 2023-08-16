@@ -42,13 +42,20 @@
                 
 # print(LastNlines(fname, N))
 
-# idx =  [(256, 295), (188, 179), (268, 75), (96, 425), (308, 140), (117, 327), (323, 313), (295, 202)]
-# for x in idx:
-#       if x != idx[5] and x != idx[6]:
-#             print(x)
+idx =  [(256, 295), (188, 179), (268, 75), (96, 425), (308, 140), (117, 327), (323, 313), (295, 202)]
+
+for i in range(len(idx)):
+    print(i, idx[i])
+
+for x in idx:
+      if x != idx[5] and x != idx[6]:
+            print(x)
+      else:
+            circle_x = x[0]
+            circle_y = x[1]
             
-# idx[5] = (1234,3455)
-# print(idx)
+idx[5] = (1234,3455)
+print(circle_x,circle_y)
 
 def last_two_min_indices(lst):
     sorted_indices = sorted(range(len(lst)), key=lambda i: lst[i])
@@ -103,3 +110,23 @@ print(indices)
 # first_two_indices = sorted_indices[-2:]
 # indices = first_two_indices.extend(last_two_indices)
 # print(indices)
+
+# Replace Values in a List using For Loop
+
+# define list
+l = ['Hardik', 'Rohit', 'Rahul', 'Virat', 'Pant']
+
+for i in range(len(l)):
+
+	# replace hardik with shardul
+	if l[i] == 'Hardik':
+		l[i] = 'Shardul'
+
+	# replace pant with ishan
+	if l[i] == 'Pant':
+		l[i] = 'Ishan'
+
+# print list
+print(l)
+
+

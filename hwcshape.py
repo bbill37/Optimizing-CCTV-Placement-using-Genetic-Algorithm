@@ -21,8 +21,8 @@ default_scale = 10
 
 img = cv2.imread(raw_path, 1)
 w, h, c = img.shape
-W = w
-H = h
+W = w-1
+H = h-1
 
 coordVals = [[0 for y in range(0,H)] for x in range(0,W)]
 
@@ -30,10 +30,10 @@ CCTV_RADIUS = 1000
 MIN_DISTANCE = 900
 MAX_DISTANCE = 1100
 
-CCTV_DIST_WEIGHT = 1.333 # cctv rand dist
+CCTV_DIST_WEIGHT = 1.666 # ???
 
 weightCCTV = 0.9 # cctv qty
-NUM_GENERATION = 20
+NUM_GENERATION = 10
 WALL_PENALTY = 0.666 # fitness
 OVERLAP_PENALTY = 0.333 # fitness
 WHITE_RANGE_WEIGHT = 1.0 # mutation
@@ -342,22 +342,34 @@ def randCoords(index,max_cctv):
 
 	rand_list = []
 
+	randx, randy, rand = randomizer()
+
 	# generate genes
 
 	while len(rand_list) < max_cctv: # cctv quan
 
-		randx, randy, rand = randomizer()
-
-		if (randx < W and randy < H) and (coordVals[randx][randy] != 1) and rand not in rand_list:
+		if randx < W and randy < H:
 
 			if coordVals[randx][randy] != 1:
 
 				if rand not in rand_list:
 					
-					if 	(imgOutline[randx,randy][0] > 223 and imgOutline[randx,randy][1] > 223 and imgOutline[randx,randy][2] > 223):
+					if 	(imgOutline[randx,randy][0] < 192 and imgOutline[randx,randy][1] < 192 and imgOutline[randx,randy][2] < 192):
+						randx, randy, rand = randomizer()
+					
+					else:
 						rand_list.append(rand)
 						radius = int(CCTV_DIST_WEIGHT*CCTV_RADIUS/default_scale) # DISTANCE BTWN GENES
-						imgOutline = circleArea(imgOutline, rand, radius, (0, 191, 0), -1)
+						imgOutline = circleArea(imgOutline, (randy,randx), radius, (0, 191, 0), -1)
+					
+				else:
+					randx, randy, rand = randomizer()
+
+			else:
+				randx, randy, rand = randomizer()
+				
+		else:
+			randx, randy, rand = randomizer()
 	
 	print(("... Solution Candidate "+ str(index+1) +" Generated ...\n"))
 
@@ -605,11 +617,16 @@ def crossover(parents, offspring_size):
 
 def mutation(parent, parent_idx, worst_gene):
 
+	for i in parent:
+		print(i)
+
+	for i in parent_idx:
+		print(i)
+
 	# for i in worst_sol_idx:
 	# 	print(i)
 
 	mutated_offspring = []
-	offspring = []
 
 	# create offspring using parent idx
 
@@ -620,10 +637,15 @@ def mutation(parent, parent_idx, worst_gene):
 
 	# worst gene idx in each offspring
 
-	gene1 = worst_gene[parent_idx[0]]
-	gene2 = worst_gene[parent_idx[1]]
-	gene3 = worst_gene[parent_idx[2]]
-	gene4 = worst_gene[parent_idx[3]]
+	gene1 = worst_gene[0]
+	gene2 = worst_gene[1]
+	gene3 = worst_gene[2]
+	gene4 = worst_gene[3]
+
+	gene1 = offspring1[gene1_idx]
+	gene2 = offspring2[gene2_idx]
+	gene3 = offspring3[gene3_idx]
+	gene4 = offspring4[gene4_idx]
 	
 	available_path = 'result/availableArea.png'
 
@@ -638,15 +660,6 @@ def mutation(parent, parent_idx, worst_gene):
 	count4 = 0
 
 	radius = int(CCTV_RADIUS/default_scale)
-
-	for i in parent:
-		print(i)
-		offspring.append(i)
-
-	# for i in parent_idx:
-	# 	print(i)
-	# for i in worst_gene:
-	# 	print(i)
 
 	# ----- ----- ----- ----- ----- ----- ----- ----- ----- -----
 
@@ -680,12 +693,12 @@ def mutation(parent, parent_idx, worst_gene):
 
 	#  ---
 
+	# exit()
 
 	for gene in offspring1:
 		if gene != gene1:
 			imgArea1 = circleArea(imgArea1, gene, radius, (0, 191, 0), -1)
 			count1 += 1
-			
 		else:
 			circle_x = gene1[0]
 			circle_y = gene1[1]
@@ -748,6 +761,7 @@ def mutation(parent, parent_idx, worst_gene):
 							old_white_val4 += 1
 
 	# print(count1)
+	# print(count2)
 
 	# ----- ----- ----- ----- ----- ----- ----- ----- ----- -----
 
@@ -772,17 +786,13 @@ def mutation(parent, parent_idx, worst_gene):
 				print(white_val1, old_white_val1)
 
 				if white_val1 >= (old_white_val1*WHITE_RANGE_WEIGHT):
+					offspring1[gene1_idx] = rand
 
-					for i in range(len(offspring1)):
-						if offspring1[i] == gene1:
-							offspring1[i] = rand
-							print(str(offspring1[i]) + " mutated")
-
-							print(str(gene1)+" >>> "+str(rand) + "\t Solution " + str(parent_idx[0]) + "\n")
-							radius = int(CCTV_RADIUS/default_scale) # DISTANCE BTWN GENES
-							imgArea1 = circleArea(imgArea1, rand, radius, (0, 191, 0), -1)
-							count1 += 1
-
+					
+					print(str(gene1)+" >>> "+str(rand) + "\t Solution " + str(parent_idx[0]) + "\n")
+					radius = int(CCTV_RADIUS/default_scale) # DISTANCE BTWN GENES
+					imgArea1 = circleArea(imgArea1, (randy,randx), radius, (0, 191, 0), -1)
+					count1 += 1
 
 	# cv2.imshow('imgArea1',imgArea1)
 
@@ -805,16 +815,11 @@ def mutation(parent, parent_idx, worst_gene):
 				print(white_val2, old_white_val2)
 
 				if white_val2 >= (old_white_val2*WHITE_RANGE_WEIGHT):
-
-					for i in range(len(offspring2)):
-						if offspring2[i] == gene2:
-							offspring2[i] = rand
-							print(str(offspring2[i]) + " mutated")
-							
-							print(str(gene2)+" >>> "+str(rand) + "\t Solution " + str(parent_idx[1]) + "\n")
-							radius = int(CCTV_RADIUS/default_scale) # DISTANCE BTWN GENES
-							imgArea2 = circleArea(imgArea2, rand, radius, (0, 191, 0), -1)
-							count2 += 1
+					offspring2[gene2_idx] = rand
+					print(str(gene2)+" >>> "+str(rand) + "\t Solution " + str(parent_idx[1]) + "\n")
+					radius = int(CCTV_RADIUS/default_scale) # DISTANCE BTWN GENES
+					imgArea2 = circleArea(imgArea2, (randy,randx), radius, (0, 191, 0), -1)
+					count2 += 1
 
 	while len(offspring3) > count3:
 
@@ -831,16 +836,11 @@ def mutation(parent, parent_idx, worst_gene):
 				print(white_val3, old_white_val3)
 
 				if white_val3 >= (old_white_val3*WHITE_RANGE_WEIGHT):
-
-					for i in range(len(offspring3)):
-						if offspring3[i] == gene3:
-							offspring3[i] = rand
-							print(str(offspring3[i]) + " mutated")
-							
-							print(str(gene3)+" >>> "+str(rand) + "\t Solution " + str(parent_idx[2]) + "\n")
-							radius = int(CCTV_RADIUS/default_scale) # DISTANCE BTWN GENES
-							imgArea3 = circleArea(imgArea3, rand, radius, (0, 191, 0), -1)
-							count3 += 1
+					offspring3[gene3_idx] = rand
+					print(str(gene3)+" >>> "+str(rand) + "\t Solution " + str(parent_idx[2]) + "\n")
+					radius = int(CCTV_RADIUS/default_scale) # DISTANCE BTWN GENES
+					imgArea3 = circleArea(imgArea3, (randy,randx), radius, (0, 191, 0), -1)
+					count3 += 1
 
 	while len(offspring4) > count4:
 
@@ -857,16 +857,11 @@ def mutation(parent, parent_idx, worst_gene):
 				print(white_val4, old_white_val4)
 
 				if white_val4 >= (old_white_val4*WHITE_RANGE_WEIGHT):
-
-					for i in range(len(offspring4)):
-						if offspring4[i] == gene4:
-							offspring4[i] = rand
-							print(str(offspring4[i]) + " mutated")
-							
-							print(str(gene4)+" >>> "+str(rand) + "\t Solution " + str(parent_idx[3]) + "\n")
-							radius = int(CCTV_RADIUS/default_scale) # DISTANCE BTWN GENES
-							imgArea2 = circleArea(imgArea4, rand, radius, (0, 191, 0), -1)
-							count4 += 1
+					offspring4[gene4_idx] = rand
+					print(str(gene4)+" >>> "+str(rand) + "\t Solution " + str(parent_idx[3]) + "\n")
+					radius = int(CCTV_RADIUS/default_scale) # DISTANCE BTWN GENES
+					imgArea2 = circleArea(imgArea4, (randy,randx), radius, (0, 191, 0), -1)
+					count4 += 1
 
 	# print(offspring1)
 	# print(offspring2)
