@@ -986,7 +986,7 @@ if __name__=="__main__":
 	# Implement area_valuer() to assign values in a 2D array 
 	# representing the coordinates in the resulting image from the selectROI() loop.
 
-	valuedImage  = areaValuer() # coordVals 
+	areaValuer() # coordVals 
 
 	# ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----
 
