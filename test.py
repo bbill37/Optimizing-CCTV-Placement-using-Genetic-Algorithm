@@ -44,7 +44,7 @@
 
 idx =  [(256, 295), (188, 179), (268, 75), (96, 425), (308, 140), (117, 327), (323, 313), (295, 202)]
 
-for i in range(len(idx)):
+for i in range(2,8):
     print(i, idx[i])
 
 for x in idx:
