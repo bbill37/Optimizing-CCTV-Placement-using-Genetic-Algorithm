@@ -27,6 +27,10 @@ args = parser.parse_args()
 
 # Access the values of the arguments
 floorplan_path = args.floorplan
+filename = os.path.basename(floorplan_path)
+
+print(filename)  # This will print 'art4.png'
+
 weightage_value = float(args.weightage)
 
 # Now you can use floorplan_path and weightage_value in your optimization algorithm
@@ -38,7 +42,7 @@ print(f"Weightage Value: {weightage_value}")
 # ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----
 
 # declaration
-raw_path = floorplan_path
+raw_path = filename
 # raw_path = "parking.png"
 coords = []
 value = []

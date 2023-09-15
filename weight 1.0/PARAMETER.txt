@@ -4,3 +4,10 @@
 -1.0 WALL_PENALTY
 0.5 OVERLAP_PENALTY
 1.0 WHITE_RANGE_WEIGHT
+
+0.02 convergence_threshold
+10 max_frequency
+
+
+
+	
